@@ -1,0 +1,41 @@
+{
+ "call_id": "rehearse-6f3812cd",
+ "utterances": [
+  {
+   "utterance_id": 1,
+   "speaker_id": "u-rohan",
+   "speaker_name": "Rohan",
+   "text": "December is packed at work, man. Yeah. That works, but keep it under 30,000 lead.",
+   "t_start_s": 3.882,
+   "t_end_s": 8.762,
+   "confidence": 0.996
+  },
+  {
+   "utterance_id": 2,
+   "speaker_id": "u-kushal",
+   "speaker_name": "Kushal",
+   "text": "What about the second week of December instead?",
+   "t_start_s": 7.521,
+   "t_end_s": 10.081,
+   "confidence": 0.999
+  },
+  {
+   "utterance_id": 3,
+   "speaker_id": "u-rohan",
+   "speaker_name": "Rohan",
+   "text": "Bali sounds good to me. What about flight, though?",
+   "t_start_s": 9.252,
+   "t_end_s": 12.212,
+   "confidence": 1.0
+  },
+  {
+   "utterance_id": 4,
+   "speaker_id": "u-kushal",
+   "speaker_name": "Kushal",
+   "text": "And direct flights only, please. We fly out of Right?",
+   "t_start_s": 10.271,
+   "t_end_s": 13.951,
+   "confidence": 0.995
+  }
+ ]
+}

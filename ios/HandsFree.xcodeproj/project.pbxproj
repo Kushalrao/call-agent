@@ -1,0 +1,365 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0BF709A737D39AAED5A15A4A /* CallCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA8A34D8ECEA8332AB3194C /* CallCenter.swift */; };
+		3349EABEF8ECC8D525B25CB5 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A6D76AA3F5F07C8A6DC02F /* WidgetViews.swift */; };
+		702D8697E7457F09341FC9B1 /* HandsFreeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3A91B255E15CC8D0F6A874 /* HandsFreeApp.swift */; };
+		A1F283F5F2B2FA3A69E27536 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50ABE2D8C1C70AF602D26569 /* APIClient.swift */; };
+		C209A03E38654866E8E6AEB6 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE13DC09EE668433E8ADE7DA /* Config.swift */; };
+		C2A6DD0C7C40BA48633E8D11 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9A03BA2A8ED3D3D5FE8691 /* WidgetModels.swift */; };
+		CE7478C298292D69004C764A /* EventSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835A311F217B3DA9B4AE3480 /* EventSocket.swift */; };
+		DE2026AD798A8F6E06A8FD7F /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972F051F91711468CC7F415E /* AppState.swift */; };
+		F4DD03E30F55C718243C267F /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3EDA7C0BCA31EA679C6F465D /* LiveKit */; };
+		F4FB35790B28C8646792209C /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD93FF4A99BB66BF680FA63 /* Views.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0A3A91B255E15CC8D0F6A874 /* HandsFreeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandsFreeApp.swift; sourceTree = "<group>"; };
+		50ABE2D8C1C70AF602D26569 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		835A311F217B3DA9B4AE3480 /* EventSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSocket.swift; sourceTree = "<group>"; };
+		8FDFC2FE2D0EF164BBCA2FA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		93ADC6A106CE87B9C27196B4 /* HandsFree.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HandsFree.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		972F051F91711468CC7F415E /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		9BA8A34D8ECEA8332AB3194C /* CallCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallCenter.swift; sourceTree = "<group>"; };
+		A0A6D76AA3F5F07C8A6DC02F /* WidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
+		BCD93FF4A99BB66BF680FA63 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
+		BE13DC09EE668433E8ADE7DA /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		CA9A03BA2A8ED3D3D5FE8691 /* WidgetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetModels.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FDC9BFF592E212B8F8391254 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4DD03E30F55C718243C267F /* LiveKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0E675D391F9816D5D651F362 = {
+			isa = PBXGroup;
+			children = (
+				2790329EDBB325C53B62725E /* HandsFree */,
+				EFC9166D6253A430EDE4362F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2790329EDBB325C53B62725E /* HandsFree */ = {
+			isa = PBXGroup;
+			children = (
+				50ABE2D8C1C70AF602D26569 /* APIClient.swift */,
+				972F051F91711468CC7F415E /* AppState.swift */,
+				9BA8A34D8ECEA8332AB3194C /* CallCenter.swift */,
+				BE13DC09EE668433E8ADE7DA /* Config.swift */,
+				835A311F217B3DA9B4AE3480 /* EventSocket.swift */,
+				0A3A91B255E15CC8D0F6A874 /* HandsFreeApp.swift */,
+				8FDFC2FE2D0EF164BBCA2FA5 /* Info.plist */,
+				BCD93FF4A99BB66BF680FA63 /* Views.swift */,
+				CA9A03BA2A8ED3D3D5FE8691 /* WidgetModels.swift */,
+				A0A6D76AA3F5F07C8A6DC02F /* WidgetViews.swift */,
+			);
+			path = HandsFree;
+			sourceTree = "<group>";
+		};
+		EFC9166D6253A430EDE4362F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				93ADC6A106CE87B9C27196B4 /* HandsFree.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B5AC365EA1AB84CDDBA183C8 /* HandsFree */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EA779384223072D87614E033 /* Build configuration list for PBXNativeTarget "HandsFree" */;
+			buildPhases = (
+				0E38FADC23E892123139FCD3 /* Sources */,
+				FDC9BFF592E212B8F8391254 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HandsFree;
+			packageProductDependencies = (
+				3EDA7C0BCA31EA679C6F465D /* LiveKit */,
+			);
+			productName = HandsFree;
+			productReference = 93ADC6A106CE87B9C27196B4 /* HandsFree.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1ED124DDEDF0CF90B0AAECB9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					B5AC365EA1AB84CDDBA183C8 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9B40751B61C58CDBA1CECD96 /* Build configuration list for PBXProject "HandsFree" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 0E675D391F9816D5D651F362;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AF2C4C241798BCFD681367CC /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = EFC9166D6253A430EDE4362F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B5AC365EA1AB84CDDBA183C8 /* HandsFree */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0E38FADC23E892123139FCD3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1F283F5F2B2FA3A69E27536 /* APIClient.swift in Sources */,
+				DE2026AD798A8F6E06A8FD7F /* AppState.swift in Sources */,
+				0BF709A737D39AAED5A15A4A /* CallCenter.swift in Sources */,
+				C209A03E38654866E8E6AEB6 /* Config.swift in Sources */,
+				CE7478C298292D69004C764A /* EventSocket.swift in Sources */,
+				702D8697E7457F09341FC9B1 /* HandsFreeApp.swift in Sources */,
+				F4FB35790B28C8646792209C /* Views.swift in Sources */,
+				C2A6DD0C7C40BA48633E8D11 /* WidgetModels.swift in Sources */,
+				3349EABEF8ECC8D525B25CB5 /* WidgetViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6F3B355AFFA89733947A1315 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4GAH3YJNV9;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = HandsFree/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.handsfree.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		7FAEFC333F9EB7BF2EC064A1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BE23D16E405558AF36619939 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C6C9EF9C042B5B70352BC901 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4GAH3YJNV9;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = HandsFree/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.handsfree.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9B40751B61C58CDBA1CECD96 /* Build configuration list for PBXProject "HandsFree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7FAEFC333F9EB7BF2EC064A1 /* Debug */,
+				BE23D16E405558AF36619939 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EA779384223072D87614E033 /* Build configuration list for PBXNativeTarget "HandsFree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C6C9EF9C042B5B70352BC901 /* Debug */,
+				6F3B355AFFA89733947A1315 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AF2C4C241798BCFD681367CC /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3EDA7C0BCA31EA679C6F465D /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AF2C4C241798BCFD681367CC /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 1ED124DDEDF0CF90B0AAECB9 /* Project object */;
+}

@@ -1,0 +1,36 @@
+name: HandsFree
+options:
+  bundleIdPrefix: com.handsfree
+  deploymentTarget:
+    # iPhone X never got iOS 17 (it tops out at 16.7), so 17.0 silently
+    # excluded it. LiveKit itself supports iOS 13+, so 16.0 costs us nothing.
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift
+    from: 2.0.0
+
+targets:
+  HandsFree:
+    type: application
+    platform: iOS
+    sources:
+      - path: HandsFree
+    dependencies:
+      - package: LiveKit
+        product: LiveKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.handsfree.app
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: HandsFree/Info.plist
+        # Signing is left to Xcode: open the project, select your team under
+        # Signing & Capabilities. A free Apple ID is enough for direct-to-device
+        # dev builds (7-day provisioning); TestFlight is NOT required.
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_USER_SCRIPT_SANDBOXING: NO

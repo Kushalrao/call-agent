@@ -1,0 +1,1228 @@
+{
+ "cards": {
+  "J1": [
+   {
+    "cardId": 1,
+    "travelOptionId": "6E-6554-BLR-GOI-1789479900__6E-5008-GOI-DEL-1789491600",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "6E",
+       "flightNumber": "6554"
+      },
+      {
+       "airlineCode": "6E",
+       "flightNumber": "5008"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T19:15:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "3",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-16T01:10:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 5,
+      "mm": 55
+     },
+     "stops": 1,
+     "timelineText": "1 stop (2h 5m in Dabolim Airport)",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "6E-6554-BLR-GOI-1789479900__6E-5008-GOI-DEL-1789491600"
+    ],
+    "samePriceCards": [],
+    "layover": [
+     {
+      "airport": "GOI",
+      "totalDuration": {
+       "hh": 2,
+       "mm": 5
+      },
+      "transitVisaRequired": false
+     }
+    ]
+   },
+   {
+    "cardId": 2,
+    "travelOptionId": "6E-804-BLR-DEL-1789421400",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "6E",
+       "flightNumber": "804"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T03:00:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T05:50:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 2,
+      "mm": 50
+     },
+     "stops": 0,
+     "timelineText": "Non-stop",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "6E-804-BLR-DEL-1789421400"
+    ],
+    "samePriceCards": [
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "layover": []
+   },
+   {
+    "cardId": 3,
+    "travelOptionId": "6E-809-BLR-DEL-1789453800",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "6E",
+       "flightNumber": "809"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T12:00:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T14:50:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 2,
+      "mm": 50
+     },
+     "stops": 0,
+     "timelineText": "Non-stop",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "6E-809-BLR-DEL-1789453800"
+    ],
+    "samePriceCards": [
+     2,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "layover": []
+   },
+   {
+    "cardId": 4,
+    "travelOptionId": "6E-836-BLR-DEL-1789428900",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "6E",
+       "flightNumber": "836"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T05:05:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T07:55:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 2,
+      "mm": 50
+     },
+     "stops": 0,
+     "timelineText": "Non-stop",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "6E-836-BLR-DEL-1789428900"
+    ],
+    "samePriceCards": [
+     2,
+     3,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "layover": []
+   },
+   {
+    "cardId": 5,
+    "travelOptionId": "IX-1040-BLR-DEL-1789463400",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "IX",
+       "flightNumber": "1040"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "IX",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "2",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T14:40:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "IX",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T17:30:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 2,
+      "mm": 50
+     },
+     "stops": 0,
+     "timelineText": "Non-stop",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "IX-1040-BLR-DEL-1789463400"
+    ],
+    "samePriceCards": [
+     2,
+     3,
+     4,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "layover": []
+   },
+   {
+    "cardId": 6,
+    "travelOptionId": "6E-817-BLR-DEL-1789485000",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "6E",
+       "flightNumber": "817"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T20:40:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "6E",
+      "airport": {
+       "code": "DEL",
+       "terminal": {
+        "name": "1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T23:30:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 2,
+      "mm": 50
+     },
+     "stops": 0,
+     "timelineText": "Non-stop",
+     "lowestRoundTripPriceDetails": null
+    },
+    "subTravelOptionIds": [
+     "6E-817-BLR-DEL-1789485000"
+    ],
+    "samePriceCards": [
+     2,
+     3,
+     4,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "layover": []
+   },
+   {
+    "cardId": 0,
+    "travelOptionId": "S5-183-BLR-NDC-1789437600__S5-187-NDC-HDO-1789444800",
+    "summary": {
+     "flights": [
+      {
+       "airlineCode": "S5",
+       "flightNumber": "183"
+      },
+      {
+       "airlineCode": "S5",
+       "flightNumber": "187"
+      }
+     ],
+     "firstDeparture": {
+      "airlineCode": "S5",
+      "airport": {
+       "code": "BLR",
+       "terminal": {
+        "name": "T2",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T07:30:00.000+05:30"
+      }
+     },
+     "lastArrival": {
+      "airlineCode": "S5",
+      "airport": {
+       "code": "HDO",
+       "terminal": {
+        "name": "T1",
+        "gate": ""
+       },
+       "zoneId": "Asia/Kolkata",
+       "timeZone": "IST",
+       "time": "2026-09-15T11:20:00.000+05:30"
+      }
+     },
+     "totalDuration": {
+      "hh": 3,
+      "mm": 50
+     },
+     "stops": 1,
+     "timelineText": "1 stop (30m in Shri Guru Gobind Singh Ji Airport)",
+     "lowestRoundTripPriceDetails": null,
+     "nearbyAirports": [
+      "HDO"
+     ]
+    },
+    "subTravelOptionIds": [
+     "S5-183-BLR-NDC-1789437600__S5-187-NDC-HDO-1789444800"
+    ],
+    "samePriceCards": [],
+    "layover": [
+     {
+      "airport": "NDC",
+      "totalDuration": {
+       "hh": 0,
+       "mm": 30
+      },
+      "transitVisaRequired": false
+     }
+    ]
+   }
+  ]
+ },
+ "subTravelOptions": {
+  "6E-804-BLR-DEL-1789421400": {
+   "subTravelOptionId": "6E-804-BLR-DEL-1789421400",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "6E-804-BLR-DEL-1789421400"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3",
+     "displayText": {
+      "displayTitle": "SAVER",
+      "displaySubTitle": "SAVER",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8659.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "6E-809-BLR-DEL-1789453800": {
+   "subTravelOptionId": "6E-809-BLR-DEL-1789453800",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "6E-809-BLR-DEL-1789453800"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3",
+     "displayText": {
+      "displayTitle": "SAVER",
+      "displaySubTitle": "SAVER",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8659.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "S5-183-BLR-NDC-1789437600__S5-187-NDC-HDO-1789444800": {
+   "subTravelOptionId": "S5-183-BLR-NDC-1789437600__S5-187-NDC-HDO-1789444800",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_HDO",
+   "sequenceToFlightIdMap": {
+    "1": "S5-183-BLR-NDC-1789437600",
+    "2": "S5-187-NDC-HDO-1789444800"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3",
+     "displayText": {
+      "displayTitle": "STANDARD",
+      "displaySubTitle": "STANDARD",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "c1087560eb4a94f0da286177091eb67c",
+      "benefitIds": [
+       "00b3aaf5e9fe0cad32282e70d7d9d8c3"
+      ],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 7101.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "6E-836-BLR-DEL-1789428900": {
+   "subTravelOptionId": "6E-836-BLR-DEL-1789428900",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "6E-836-BLR-DEL-1789428900"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3",
+     "displayText": {
+      "displayTitle": "SAVER",
+      "displaySubTitle": "SAVER",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8659.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "IX-1040-BLR-DEL-1789463400": {
+   "subTravelOptionId": "IX-1040-BLR-DEL-1789463400",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "IX-1040-BLR-DEL-1789463400"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3",
+     "displayText": {
+      "displayTitle": "VALUE",
+      "displaySubTitle": "VALUE",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8659.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "6E-817-BLR-DEL-1789485000": {
+   "subTravelOptionId": "6E-817-BLR-DEL-1789485000",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "6E-817-BLR-DEL-1789485000"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3",
+     "displayText": {
+      "displayTitle": "SAVER",
+      "displaySubTitle": "SAVER",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8659.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  },
+  "6E-6554-BLR-GOI-1789479900__6E-5008-GOI-DEL-1789491600": {
+   "subTravelOptionId": "6E-6554-BLR-GOI-1789479900__6E-5008-GOI-DEL-1789491600",
+   "type": "flight",
+   "subTravelOptionKey": "BLR_DEL",
+   "sequenceToFlightIdMap": {
+    "1": "6E-6554-BLR-GOI-1789479900",
+    "2": "6E-5008-GOI-DEL-1789491600"
+   },
+   "totalFareCount": 3,
+   "fareIds": [
+    "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3"
+   ],
+   "fareList": [
+    {
+     "fareId": "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3",
+     "displayText": {
+      "displayTitle": "SAVER",
+      "displaySubTitle": "SAVER",
+      "titleLogo": null
+     },
+     "benefitTags": [
+      {
+       "benefitType": "PARTIAL_REFUNDABLE",
+       "benefitValue": "FREE",
+       "displayText": "Partial Refundable",
+       "logo": null
+      }
+     ],
+     "benefits": {
+      "baggageAllowanceId": "",
+      "benefitIds": [],
+      "penalty": []
+     }
+    }
+   ],
+   "defaultFareShowCount": 4,
+   "cheapestFareId": "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3",
+   "sortList": [
+    "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3"
+   ],
+   "tags": [],
+   "showInterstitial": true,
+   "cabinClassSummary": {
+    "ECONOMY": {
+     "minCabinPrice": 8217.0,
+     "cabinFareIds": [
+      "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3"
+     ],
+     "cabinPromoBanner": null
+    }
+   }
+  }
+ },
+ "fares": {
+  "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3": {
+   "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z50Lcy6sTjJ1RsP10ZMBuZMXAYsMNVERqndQoM5w1E2RlO20yZQ44C9LNw5o7pYH8yfOF5nzC7Nu9NAYa1/+Z9XxH2O/sJCALgNJxISoLGL8RQCGRskIMzOrvd33gva18RkaJOLZ+mlUgB1HOOMghSoPARvsiz9rIUbEOJufaK94OsK8TzRBrELOwZskBeLPUYaPGcovXyl+ieCH/R4eOtv3m93JikMwVDF1VjUJ3zid0lCU7940b+W0003NDHIlqhKrfKggVCXIdb3Q8u/LyQ==~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get \u20b91039 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7620,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7619,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "SAVER"
+  },
+  "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3": {
+   "fareId": "REGULAR__15/09/2026__6E^6E__6E^6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER,SAVER__AVN+Z50Pvfup67r8wDzEJ/HxzVTPS8m4qEvmbETx0Jsw4xflkRE6mIHjYOL12XvDs39WSd8gp89uEQGg0iifF4jcl9Gb7UJgWP6zz+VKiMYM5BvTExDULpHf6H+yE5adpzbDJfnT6BRkpppbktxNfvHQrlTrcwjtVaMMeffPL6+eQAgyRaLD7jXoSGQleMdnDzjbAiSsd/Mdwuw3Rr/jaoK0Feajhe1IBT09Bzh4exqABgjM4KrGfsT57P93bBL7lc9oVN+zkCzjXA+E4aoPWCw4Bn1mI/GYy2AK8fs5qigDRO6v4W7LCG4=~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8217.0,
+     "totalTax": 2522.0,
+     "totalBaseFare": 5695.0,
+     "message": "Get \u20b9986 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8217.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 986,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b9986 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7231,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8217.0,
+     "totalTax": 2522.0,
+     "totalBaseFare": 5695.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8217.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 986,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b9986 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7230,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "SAVER"
+  },
+  "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3": {
+   "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z51CDM2eb7HUsNndKyr1T61CDK9Du3SE+CmQk1Za7zsYj3zUHDTkY3mNGWLVOhib1Vb3yccPcwzlFr//L6Xg+PQVcRXmkxeUwLpIuvvzaR2fEzMRl8d9zqOsU4MzJ6sQhHZP6F6+PVmHJSPgWj60IXpyzFY88KNyrPEtYNo2BZdK450K91e4jry3IYxby5WDFjr4QUh6Vs65CX3e1UePoRrmWeHu9MgNE/0ToTtN/L5+17UeUORh4pfsAmxAoA6xL8vZO7puqS5SiQKq3hy0Iw==~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get \u20b91039 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7620,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7619,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "SAVER"
+  },
+  "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3": {
+   "fareId": "REGULAR__15/09/2026__IX__IX__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S034__VALUE__AVN+Z52b5Mj2Fs0lp2cC3k07gqiLjOCMgkScC15pmjBvgkskckCe0nEBNjF21KnImzBHMh2bbji4Wb/nd5RijS3cS44nxUSMSXyyK1MoAjWOzRxxu129BJuONeNaOxf3UgohRHwidkzU50qd/bdDgQkZf6uwkp98zeU2Z5zMtRGX49BCD0VSnd2DPA+KBAIGtAOMDgbnOjYb5sSq1ZrAnVtgFUwQiro4f3SHdcKpoKbS/QvkuX3hqewoy0QNvMVSX+Oc3rYN3IsRan+kNKcCNQk=~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2243.0,
+     "totalBaseFare": 6416.0,
+     "message": "Get \u20b91082 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1082,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91082 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7577,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2243.0,
+     "totalBaseFare": 6416.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1082,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91082 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7576,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "VALUE"
+  },
+  "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3": {
+   "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52ZQ0uFBfPGBeP9XvWQdWPz4SK628yMkTAU05Z5zp1UNYr25dqTkYT8omDVlqq+EyaV7c8yx5xAryc/jxhTlu5aX1lkBPnCI9odE5allrIxMpzNYdLbIN44fqiUUHMI4Xj2Op1A4SsOoPtV6fN5RdBVgKNKYS1SGd2bplk4Xk6HrwDgQRCR7Sm4innEBkyFA9xjYhw87P8qyePuHsEVeDMbimXpWGjOZw7KSZepAp6xZd1PxriZlSmyIbqRgk4coFKVITfpwfHnhodNsQQhVw==~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get \u20b91039 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7620,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7619,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "SAVER"
+  },
+  "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3": {
+   "fareId": "REGULAR__15/09/2026__6E__6E__BLR_DEL__true__RETAIL__E__DOM__OW__UNKNOWN__S050__SAVER__AVN+Z52dg37C9U78S9d4xJ54o4ogI6HyNJgq6DD+jlD9D0WasPw35+L9FUOV8aUUSipukmJPO+XNjpyzCq2eglqd3x6T1vxHkbvjEqp5+aPR+ccCGq1gl+9O7VxQO7cYsKVZZNtcPeM8oY2JC+RUNWtrhnAY6D+6EYdz09D7eq2VfVJ3KYxu7c5po1vOAwPgJVbGNU7CEso68djrHuzp94ymjk19hfEhzLZpBNZhtXTNff6B/Vw0PDLoMpZCB5fNwUyWz5V1qSu+8ydefpyg4oVnXQ==~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get \u20b91039 off with SBIMAX",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7620,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 8659.0,
+     "totalTax": 2218.0,
+     "totalBaseFare": 6441.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 8659.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 1039,
+      "couponCode": "SBIMAX",
+      "message": "Get \u20b91039 off with SBIMAX",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 7619,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "SAVER"
+  },
+  "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3": {
+   "fareId": "REGULAR__15/09/2026__S5^S5__S5^S5__BLR_HDO__true__RETAIL__E__DOM__OW__UNKNOWN__S056__STANDARD,STANDARD__AVN+Z53fpBZHhAy06K/trNpTA5W4WnN/h0rgWox5zPdRm4RENeuS/0mNi7EKCPoBRG6GF6Oa3nWzfmldoS2Xv43bdcCIKsM45FbZ5lUI6rO6SxcYWD2hw1n64VjzPITbNb9J965SfsLnSJSeMrjPz7QG85o7kYNZhdGHBKDuUJLUQvE7zGkfCjAj0Lf8mA+7SBWo/t8p29PFJ/RBwWvB4pwOkTaacFE/8sx1ZEjHjIBQl+a6C/y0LhDsT+pcmgy3gcIOxFiNX8gf5H3f8dXS00D3RHgP50YZPle8Yo5ei5L//Q==~~V3",
+   "pricing": {
+    "totalPricing": {
+     "totalPrice": 7101.0,
+     "totalTax": 1184.0,
+     "totalBaseFare": 5917.0,
+     "message": "\u20b9522 off with CTFKSBIC",
+     "amendInsuranceCharges": 0.0,
+     "cancelInsuranceCharges": 0.0,
+     "travelInsuranceCharges": 0.0,
+     "visaRejectionCoverCharges": 0.0,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 7101.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 522,
+      "couponCode": "CTFKSBIC",
+      "message": "\u20b9522 off with CTFKSBIC",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 6579,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    },
+    "perAdultPricing": {
+     "totalPrice": 7101.0,
+     "totalTax": 1184.0,
+     "totalBaseFare": 5917.0,
+     "message": "Get {discountAmount} off on total with {couponCode}",
+     "amendInsuranceCharges": null,
+     "cancelInsuranceCharges": null,
+     "travelInsuranceCharges": null,
+     "visaRejectionCoverCharges": null,
+     "strikeOffDetails": {
+      "strikeOffPrice": null,
+      "displayPrice": 7101.0,
+      "discountAmount": null
+     },
+     "couponDetails": {
+      "discountAmount": 522,
+      "couponCode": "CTFKSBIC",
+      "message": "\u20b9522 off with CTFKSBIC",
+      "adultCouponMessage": "Get {discountAmount} off on total with {couponCode}",
+      "discountedPrice": 6578,
+      "slasherCouponCode": null,
+      "wowDisplayPrice": null
+     }
+    }
+   },
+   "brand": "STANDARD"
+  }
+ },
+ "metaData": {
+  "airlineDetail": {
+   "S5": {
+    "code": "S5",
+    "name": "Star Air",
+    "logoURL": ""
+   },
+   "SG": {
+    "code": "SG",
+    "name": "SpiceJet",
+    "logoURL": ""
+   },
+   "AI": {
+    "code": "AI",
+    "name": "Air India",
+    "logoURL": ""
+   },
+   "IX": {
+    "code": "IX",
+    "name": "Air India Express",
+    "logoURL": ""
+   },
+   "6E": {
+    "code": "6E",
+    "name": "IndiGo",
+    "logoURL": ""
+   },
+   "QP": {
+    "code": "QP",
+    "name": "Akasa Air",
+    "logoURL": ""
+   }
+  }
+ },
+ "travelOptionIdsToFareIdsMap": {}
+}
