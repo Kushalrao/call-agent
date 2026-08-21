@@ -71,6 +71,7 @@ struct AgentCallView: View {
     private var headline: String {
         switch agent.phase {
         case .idle: return ""
+        case .requestingToken: return "Starting"
         case .connecting: return "Connecting"
         case .waitingForAgent: return "Joining"
         case .live:
@@ -82,6 +83,7 @@ struct AgentCallView: View {
 
     private var subtitle: String? {
         switch agent.phase {
+        case .requestingToken: return "Contacting the hands-free server…"
         case .connecting: return "Reaching the copilot…"
         case .waitingForAgent: return "In the room — waiting for the copilot…"
         case .live: return agent.agentAudible ? nil : "Copilot has no voice yet…"

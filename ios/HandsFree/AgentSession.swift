@@ -26,6 +26,11 @@ enum AgentSessionError: Error {
 final class AgentSession: ObservableObject {
     enum Phase: Equatable {
         case idle
+        /// Asking our own server for a room token. Fails when the phone cannot
+        /// reach the Mac — a different problem, and a different fix, from failing
+        /// to reach ElevenLabs. Collapsing the two into one "connecting" state
+        /// cost three debugging cycles.
+        case requestingToken
         case connecting
         /// Connected and listening, but the agent has not joined the room yet.
         case waitingForAgent
@@ -52,11 +57,14 @@ final class AgentSession: ObservableObject {
         }
     }
 
+    /// Where the server is, so a failure can say which address it tried.
+    var serverAddress: String { Config.baseURL }
+
     // MARK: - Lifecycle
 
     func start() async {
         guard !isActive else { return }
-        phase = .connecting
+        phase = .requestingToken
         lastError = nil
         agentAudible = false
         elapsed = 0
@@ -70,7 +78,18 @@ final class AgentSession: ObservableObject {
         }
 
         do {
-            let session = try await APIClient.shared.startAgentSession()
+            let session: AgentSessionInfo
+            do {
+                session = try await APIClient.shared.startAgentSession()
+            } catch {
+                // Name the step. "Couldn't reach the copilot" sent us looking at
+                // ElevenLabs when the phone simply could not see the Mac.
+                fail("Can't reach the hands-free server at \(Config.baseURL). "
+                     + "Check the address in Settings and that both devices are "
+                     + "on the same network.")
+                return
+            }
+            phase = .connecting
             let room = Room()
             room.add(delegate: self)
             self.room = room
