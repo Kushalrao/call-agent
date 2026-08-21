@@ -120,6 +120,23 @@ final class CallCenter: NSObject, ObservableObject {
         // device module - initialising the audio stack before the UI exists is
         // both unnecessary and a plausible way to get killed at launch.
         // prepareAudioStack() does it once, when a call actually starts.
+
+        #if DEBUG
+            // Screenshot / layout hook. `-preview_phase active` (or ringing)
+            // drops straight into a call state without a server, a second device
+            // or a tap, which is the only way to capture these screens from the
+            // command line. Debug builds only, and it publishes nothing.
+            if let phase = UserDefaults.standard.string(forKey: "preview_phase") {
+                remoteName = UserDefaults.standard.string(forKey: "preview_name") ?? "Parth"
+                switch phase {
+                case "ringing": self.phase = .outgoingRinging
+                case "connecting": self.phase = .connecting
+                case "active": self.phase = .active
+                default: break
+                }
+                agentPresent = UserDefaults.standard.bool(forKey: "preview_agent")
+            }
+        #endif
     }
 
     private var audioStackPrepared = false

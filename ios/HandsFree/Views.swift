@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 // MARK: - Root
@@ -12,7 +13,7 @@ struct RootView: View {
     var body: some View {
         ZStack {
             if app.isSignedIn {
-                ContactsView()
+                DialView()
             } else {
                 LoginView()
             }
@@ -169,165 +170,197 @@ struct CallView: View {
     @EnvironmentObject private var app: AppState
     @EnvironmentObject private var call: CallCenter
     @State private var showDebug = false
+    @State private var elapsed = 0
+
+    /// Ticks the connected-state timer (68:2127). Driven by the view rather than
+    /// by CallCenter so the call layer stays free of display concerns.
+    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(white: 0.09), Color(white: 0.16)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Agent indicator. Driven by participant metadata, not local
-                // state, so it always reflects who is actually in the room. Not
-                // dismissible and not a toggle — there is no consent gate.
-                if call.agentPresent {
-                    HStack(spacing: 6) {
-                        Image(systemName: "sparkles")
-                        Text("Trip copilot is listening")
-                    }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.85))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(.white.opacity(0.12), in: Capsule())
-                    .padding(.top, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                Spacer()
-
-                VStack(spacing: 10) {
-                    Text(call.remoteName.isEmpty ? "…" : call.remoteName)
-                        .font(.system(size: 32, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-
-                    Text(statusText)
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.65))
-                        .contentTransition(.opacity)
-
-                    if call.phase == .reconnecting {
-                        HStack(spacing: 6) {
-                            ProgressView().controlSize(.mini).tint(.white)
-                            Text("Reconnecting…").font(.caption)
-                        }
-                        .foregroundStyle(.white.opacity(0.8))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.orange.opacity(0.3), in: Capsule())
-                    }
-                }
-
-                if let error = call.lastError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                        .padding(.top, 16)
-                }
-
-                Spacer()
-
-                // The card is laid out ABOVE the controls rather than overlaid
-                // on top of them. Overlaying would mean guessing a padding value
-                // that happens to clear a card whose height depends on how many
-                // flights came back — and getting it wrong puts the agent
-                // between two people and the end of their call.
-                if let widget = call.activeWidget, case .flightResults = widget.content {
-                    WidgetRenderer(envelope: widget) { call.dismissWidget() }
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.bottom, 14)
-                }
-
-                controls
-                    .padding(.bottom, 36)
-            }
-
+        CallScaffold(
+            gradient: Frost.callGradient,
+            // The design shows one control in both states and it hangs up.
+            buttonIcon: "pause.fill",
+            onButton: { call.end() }
+        ) {
+            card
+        }
+        // Widgets and the agent indicator are laid over the designed surface
+        // rather than folded into the card: the card's contents are fixed by the
+        // design, and a flight card's height depends on how many flights came
+        // back. Overlaying keeps both intact.
+        .overlay(alignment: .top) { topOverlay }
+        .overlay(alignment: .bottom) { widgetOverlay }
+        .overlay(alignment: .topTrailing) { devTools }
+        .overlay(alignment: .bottom) {
             if showDebug {
                 DebugOverlay(lines: call.debugLines, quality: call.connectionQuality)
                     .transition(.move(edge: .bottom))
                     .zIndex(2)
             }
         }
-        .overlay(alignment: .top) {
-            if let widget = call.activeWidget, case let .agentStatus(status) = widget.content {
-                AgentStatusToast(status: status)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            // Dev builds only: the panel that answers "why didn't the agent
-            // fire?" live on a call (spec 11.2), plus the Phase 1 spike buttons
-            // that inject widget payloads with no agent involved.
-            #if DEBUG
-                HStack(spacing: 14) {
-                    Button {
-                        call.handleWidget(data: WidgetSamples.searching)
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                    Button {
-                        call.handleWidget(data: WidgetSamples.flightResults)
-                    } label: {
-                        Image(systemName: "airplane")
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                    Button {
-                        withAnimation(.snappy) { showDebug.toggle() }
-                    } label: {
-                        Image(systemName: showDebug ? "ladybug.fill" : "ladybug")
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                }
-                .padding(20)
-            #endif
+        .onReceive(tick) { _ in
+            if call.phase == .active || call.phase == .reconnecting { elapsed += 1 }
         }
         .animation(.snappy, value: call.agentPresent)
         .animation(.snappy, value: call.phase)
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: call.activeWidget?.widgetID)
     }
 
-    private var statusText: String {
-        switch call.phase {
-        case .idle: return ""
-        case .outgoingRinging: return "Calling…"
-        case .incomingRinging: return "Incoming call"
-        case .connecting: return "Connecting…"
-        case .active: return "Connected"
-        case .reconnecting: return "Connected"
-        case let .ended(reason): return reason == "declined" ? "Declined" : "Call ended"
+    // MARK: - The card
+
+    private var isConnected: Bool {
+        call.phase == .active || call.phase == .reconnecting
+    }
+
+    @ViewBuilder private var card: some View {
+        if isConnected {
+            connectedCard
+        } else {
+            callingCard
         }
     }
 
-    @ViewBuilder private var controls: some View {
-        HStack(spacing: 28) {
-            if call.phase == .incomingRinging {
-                CircleButton(icon: "phone.down.fill", tint: .red) { call.end() }
-                // On device the answer happens on CallKit's own call screen, so
-                // this button is only the in-app path (Simulator).
-                CircleButton(icon: "phone.fill", tint: .green) {
-                    Task { await call.answerFromApp() }
-                }
-                .disabled(call.usesCallKit)
-            } else {
-                CircleButton(
-                    icon: call.isMuted ? "mic.slash.fill" : "mic.fill",
-                    tint: call.isMuted ? .white.opacity(0.35) : .white.opacity(0.18)
-                ) { call.toggleMute() }
+    /// Figma 68:2008 — ringing. One avatar at y=167, the meter under it, and the
+    /// headline at y=390.
+    private var callingCard: some View {
+        FrostPanel {
+            FrostAvatar(url: nil, name: call.remoteName)
+                .offset(y: 167)
 
-                CircleButton(icon: "phone.down.fill", tint: .red) { call.end() }
+            // Bars span x 142-209 in a 356-wide card, so very slightly left of
+            // centre — matched rather than rounded to centre.
+            Waveform(
+                color: Color(red: 209 / 255, green: 207 / 255, blue: 207 / 255), // #D1CFCF
+                animating: true
+            )
+            .offset(x: (175.5 - Frost.cardSize.width / 2), y: 304 + 17.5 - 12.5)
 
-                CircleButton(
-                    icon: call.isSpeaker ? "speaker.wave.2.fill" : "speaker.fill",
-                    tint: call.isSpeaker ? .white.opacity(0.35) : .white.opacity(0.18)
-                ) { call.toggleSpeaker() }
+            Text(headline)
+                .font(Frost.headline)
+                .foregroundStyle(Frost.headlineColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .offset(y: 390)
+
+            if let error = call.lastError {
+                Text(error)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+                    .offset(y: 450)
             }
         }
+    }
+
+    /// Figma 68:2072 — connected. Two overlapping avatars, and only the remote
+    /// one wears the ring.
+    private var connectedCard: some View {
+        FrostPanel {
+            FrostAvatar(url: nil, name: app.session?.displayName ?? "You", ringed: false)
+                .offset(x: -50.5, y: 118)
+
+            FrostAvatar(url: nil, name: call.remoteName)
+                .offset(x: 50.5, y: 149)
+
+            // The meter sits under the right-hand avatar (x 193-260), not centred.
+            Waveform(
+                color: Color(red: 230 / 255, green: 230 / 255, blue: 230 / 255), // #E6E6E6
+                animating: call.phase == .active
+            )
+            .offset(x: (226.5 - Frost.cardSize.width / 2), y: 304 - 0.5 - 12.5)
+
+            Text(timerText)
+                .font(Frost.headline)
+                .foregroundStyle(Frost.headlineColor)
+                .monospacedDigit()
+                .offset(y: 391)
+
+            if call.phase == .reconnecting {
+                Text("Reconnecting…")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(Frost.nameColor)
+                    .offset(y: 445)
+            }
+        }
+    }
+
+    private var headline: String {
+        let name = call.remoteName.isEmpty ? "…" : call.remoteName
+        switch call.phase {
+        case .incomingRinging: return name
+        case .connecting: return "Connecting"
+        case let .ended(reason): return reason == "declined" ? "Declined" : "Call ended"
+        default: return "Calling \(name)"
+        }
+    }
+
+    private var timerText: String {
+        String(format: "%02d:%02d", elapsed / 60, elapsed % 60)
+    }
+
+    // MARK: - Overlays (unchanged capability)
+
+    @ViewBuilder private var topOverlay: some View {
+        VStack(spacing: 8) {
+            // Driven by participant metadata, not local state, so it always
+            // reflects who is actually in the room. There is no consent gate.
+            if call.agentPresent {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                    Text("Trip copilot is listening")
+                }
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Frost.nameColor)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Frost.fill, in: Capsule())
+                .overlay(Capsule().strokeBorder(Frost.border, lineWidth: 1))
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            if let widget = call.activeWidget, case let .agentStatus(status) = widget.content {
+                AgentStatusToast(status: status)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder private var widgetOverlay: some View {
+        if let widget = call.activeWidget, case .flightResults = widget.content {
+            WidgetRenderer(envelope: widget) { call.dismissWidget() }
+                .padding(.horizontal, 16)
+                // Clear of the hang-up button rather than over it.
+                .padding(.bottom, 190)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    @ViewBuilder private var devTools: some View {
+        // Dev builds only: the panel that answers "why didn't the agent fire?"
+        // live on a call (spec 11.2), plus the widget-injection buttons.
+        #if DEBUG
+            HStack(spacing: 14) {
+                Button { call.handleWidget(data: WidgetSamples.searching) } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+                Button { call.handleWidget(data: WidgetSamples.flightResults) } label: {
+                    Image(systemName: "airplane")
+                }
+                Button { withAnimation(.snappy) { showDebug.toggle() } } label: {
+                    Image(systemName: showDebug ? "ladybug.fill" : "ladybug")
+                }
+                if call.phase == .incomingRinging, !call.usesCallKit {
+                    Button { Task { await call.answerFromApp() } } label: {
+                        Image(systemName: "phone.fill").foregroundStyle(.green)
+                    }
+                }
+            }
+            .foregroundStyle(Frost.nameColor)
+            .padding(20)
+        #endif
     }
 }
 
