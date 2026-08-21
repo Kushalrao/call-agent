@@ -177,20 +177,31 @@ private struct AirlineMark: View {
     }
 }
 
-/// The list, scrollable because twelve rows at 78.6pt each exceed the card.
+/// The list.
+///
+/// `embedded` means it is already inside a scroll view — nesting two scroll views
+/// on the same axis makes both feel broken, and the weather card sits above these
+/// rows in one shared scroll.
 struct FlightList: View {
     let flights: [Flight]
+    var embedded = false
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(flights) { flight in
-                    ResultRow(flight: flight)
-                }
-            }
-            .frame(width: Row.width, alignment: .leading)
-            .padding(.leading, Row.listInsetX)
-            .padding(.top, Row.listInsetY)
+        if embedded {
+            rows
+        } else {
+            ScrollView(.vertical, showsIndicators: false) { rows }
         }
+    }
+
+    private var rows: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(flights) { flight in
+                ResultRow(flight: flight)
+            }
+        }
+        .frame(width: Row.width, alignment: .leading)
+        .padding(.leading, Row.listInsetX)
+        .padding(.top, Row.listInsetY)
     }
 }

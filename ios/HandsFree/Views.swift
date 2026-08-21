@@ -13,6 +13,7 @@ struct RootView: View {
     // so the agent screen would never appear if this were read through `app`.
     @EnvironmentObject private var agent: AgentSession
     @EnvironmentObject private var flights: FlightStore
+    @EnvironmentObject private var weather: WeatherStore
 
     var body: some View {
         ZStack {
@@ -28,6 +29,7 @@ struct RootView: View {
                 .environmentObject(app)
                 .environmentObject(agent)
                 .environmentObject(flights)
+                .environmentObject(weather)
         }
         // The call surface covers everything. Widgets will render on top of this
         // in Phase 1, which is why the call view owns the full screen.

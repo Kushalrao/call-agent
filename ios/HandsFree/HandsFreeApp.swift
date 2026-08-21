@@ -8,6 +8,7 @@ struct HandsFreeApp: App {
     // through CallCenter would have had the two breaking each other.
     @StateObject private var agent = AgentSession()
     @StateObject private var flights = FlightStore()
+    @StateObject private var weather = WeatherStore()
 
     var body: some Scene {
         WindowGroup {
@@ -16,6 +17,7 @@ struct HandsFreeApp: App {
                 .environmentObject(app.callCenter)
                 .environmentObject(agent)
                 .environmentObject(flights)
+                .environmentObject(weather)
                 .preferredColorScheme(.dark)
         }
     }

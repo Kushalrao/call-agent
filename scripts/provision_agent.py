@@ -86,6 +86,18 @@ again for the same route just because they asked something else about it.
 - `options[].duration_min` — total journey in minutes. Say it in hours and
   minutes, not "two hundred and ninety minutes".
 
+Weather:
+- Call weather when they ask about weather, temperature, rain, or what to pack.
+- Pass `day` for a single day ("what's Saturday like"), omit it for the week.
+- Read `say` as it is. The condition words come from the forecast, so do not
+  rephrase "light rain" into "a bit wet" — the difference between light and heavy
+  is the difference between a jacket and a changed plan.
+- It also puts the forecast on their screen, above the flights.
+- Only when they ask. Never volunteer weather, never call this tool as part of
+  searching flights, and never mention it because it seems relevant. If they have
+  not asked about weather, they do not want it — a copilot that answers questions
+  nobody asked is one people stop talking to.
+
 Showing things on screen:
 The caller has a screen with the flight list on it. Keep it in step with what you
 are saying.
@@ -154,6 +166,50 @@ def request(method: str, path: str, key: str, body: dict | None = None) -> tuple
             return response.status, json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as exc:
         return exc.code, json.loads(exc.read() or b"{}")
+
+
+def weather_tool_config(url: str, secret: str) -> dict:
+    return {
+        "type": "webhook",
+        "name": "weather",
+        "description": (
+            "Weather at the destination. Call this when the caller asks about "
+            "weather, temperature, rain, or what to pack. Pass a day for one day "
+            "only; omit it for the week ahead. It also puts the forecast on their "
+            "screen."
+        ),
+        "response_timeout_secs": 15,
+        "api_schema": {
+            "url": url.rstrip("/") + "/tool/weather",
+            "method": "POST",
+            "request_headers": {
+                "Content-Type": "application/json",
+                "X-Tool-Secret": secret,
+            },
+            "request_body_schema": {
+                "type": "object",
+                "required": ["destination"],
+                "description": "Where, and optionally when.",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "description": "Destination city as the user said it.",
+                        "dynamic_variable": "",
+                        "constant_value": "",
+                    },
+                    "day": {
+                        "type": "string",
+                        "description": (
+                            "A weekday like 'Saturday' or an ISO date, for one day "
+                            "only. Omit for the whole week."
+                        ),
+                        "dynamic_variable": "",
+                        "constant_value": "",
+                    },
+                },
+            },
+        },
+    }
 
 
 def city_note_tool_config(url: str, secret: str) -> dict:
@@ -377,7 +433,8 @@ def main() -> int:
 
     tool_ids: list[str] = []
     webhooks = (("search_flights", tool_config), ("route_advice", advice_tool_config),
-                ("city_note", city_note_tool_config))
+                ("city_note", city_note_tool_config),
+                ("weather", weather_tool_config))
     clients = (("show_flights", show_flights_tool), ("filter_flights", filter_flights_tool))
 
     for name, builder in webhooks + clients:

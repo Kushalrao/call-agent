@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 from agent.advice import RouteAdvice, advise
 from agent.airports import describe
 from agent.citynote import NOTES
+from agent.weather import forecast_for
 from agent.places import resolve, spoken_name
 from agent.resolver import resolve_with_model
 from agent.search import (
@@ -70,6 +71,13 @@ _latest: dict[str, Any] = {}
 # Failures are deliberately *not* put in the result cache: caching one bad moment
 # would lock a route out for the full ten minutes.
 _failures: dict[str, float] = {}
+
+# Latest weather, for the phone. Same single-slot caveat as _latest.
+_weather: dict[str, Any] = {}
+# Forecasts by airport, briefly. A week's outlook does not change between two
+# questions in one conversation, and re-fetching would just add latency.
+_weather_cache: dict[str, tuple[float, Any]] = {}
+WEATHER_TTL_S = 900.0
 FAILURE_COOLDOWN_S = 90.0
 
 
@@ -335,6 +343,31 @@ def _spoken_list(codes: list[str]) -> str:
     return ", ".join(cities[:-1]) + f", or {cities[-1]}"
 
 
+class LatestWeather(BaseModel):
+    city: str = ""
+    condition: str = ""
+    now_c: int | None = None
+    fetched_at: float = 0.0
+    days: list[WeatherDay] = []
+
+
+@app.get("/session/weather", response_model=LatestWeather)
+async def latest_weather() -> LatestWeather:
+    """The last forecast, for the card. Unauthenticated for the same reason as
+    /session/latest: it is published weather, and the secret exists to protect the
+    browser, not the numbers."""
+    if not _weather:
+        return LatestWeather()
+    data = dict(_weather)
+    return LatestWeather(
+        city=data.get("city", ""),
+        condition=data.get("condition", ""),
+        now_c=data.get("now_c"),
+        fetched_at=data.get("fetched_at", 0.0),
+        days=[WeatherDay(**d) for d in data.get("days", [])],
+    )
+
+
 class LatestResponse(BaseModel):
     """What the phone renders. Rows only — no advice, no summary: the card shows
     flights, and everything else is spoken."""
@@ -367,6 +400,79 @@ async def latest() -> LatestResponse:
     if not _latest:
         return LatestResponse()
     return LatestResponse(**_latest)
+
+
+class WeatherRequest(BaseModel):
+    destination: str = Field(description="City as spoken")
+    day: str | None = Field(
+        default=None,
+        description="A weekday ('Saturday') or ISO date for one day only. Omit for the week.",
+    )
+
+
+class WeatherDay(BaseModel):
+    date: str
+    weekday: str
+    high_c: int
+    low_c: int
+    condition: str
+    icon: str
+
+
+class WeatherResponse(BaseModel):
+    """`say` is the answer to read out; the rest is what the card draws."""
+
+    say: str
+    found: bool
+    city: str = ""
+    condition: str = ""
+    now_c: int | None = None
+    days: list[WeatherDay] = []
+
+
+@app.post("/tool/weather", response_model=WeatherResponse)
+async def weather(
+    body: WeatherRequest,
+    x_tool_secret: str | None = Header(default=None, alias="X-Tool-Secret"),
+) -> WeatherResponse:
+    """Weather at the destination, for the week or for one day.
+
+    Open-Meteo, no API key, keyed off the airport's own coordinates and timezone —
+    so anywhere the agent can price flights to is somewhere it can forecast, with
+    no second table to keep in step.
+    """
+    _check(x_tool_secret)
+    destination = resolve(body.destination)
+    if destination is None:
+        return WeatherResponse(
+            say=f"I'm not sure where {body.destination} is. Which city?",
+            found=False,
+        )
+
+    now = time.monotonic()
+    cached = _weather_cache.get(destination)
+    if cached and (now - cached[0]) < WEATHER_TTL_S:
+        forecast = cached[1]
+        log_event("tool.weather_cache_hit", call_id="tool", code=destination)
+    else:
+        forecast = await forecast_for(destination, call_id="tool")
+        if forecast.ok:
+            _weather_cache[destination] = (now, forecast)
+
+    if forecast.ok:
+        # Published for the card. Set whether they asked for a day or the week:
+        # the card always shows the week, and the spoken answer narrows.
+        _weather.clear()
+        _weather.update({**forecast.as_dict(), "fetched_at": time.time()})
+
+    return WeatherResponse(
+        say=forecast.say(body.day),
+        found=forecast.ok,
+        city=forecast.city,
+        condition=forecast.condition,
+        now_c=forecast.now_c,
+        days=[WeatherDay(**d) for d in forecast.as_dict()["days"]],
+    )
 
 
 class CityNoteRequest(BaseModel):

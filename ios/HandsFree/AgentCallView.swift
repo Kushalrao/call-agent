@@ -10,6 +10,7 @@ struct AgentCallView: View {
     @EnvironmentObject private var app: AppState
     @EnvironmentObject private var agent: AgentSession
     @EnvironmentObject private var flights: FlightStore
+    @EnvironmentObject private var weather: WeatherStore
 
     var body: some View {
         CallScaffold(
@@ -18,7 +19,7 @@ struct AgentCallView: View {
             onButton: { Task { await agent.stop() } }
         ) {
             FrostPanel {
-                if flights.hasResults {
+                if weather.hasForecast || flights.hasResults {
                     // Results replace the avatars rather than sitting under them:
                     // the card is a fixed size from the design, and twelve rows
                     // plus two 123pt avatars do not fit in it.
@@ -31,13 +32,20 @@ struct AgentCallView: View {
         .animation(.snappy, value: agent.phase)
         .animation(.snappy, value: agent.agentAudible)
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: flights.visible.count)
-        .task { flights.start() }
+        .animation(.spring(response: 0.42, dampingFraction: 0.85), value: weather.days.count)
+        .task {
+            flights.start()
+            weather.start()
+        }
         // The agent asks for a shape; the store owns the rows. Kept as a one-way
         // sync so there is a single place that decides what is on screen.
         // Single-parameter onChange: the two-parameter form is iOS 17+, and this
         // app ships to 16 for the iPhone X.
         .onChange(of: agent.filter) { newFilter in flights.filter = newFilter }
-        .onDisappear { flights.stop() }
+        .onDisappear {
+            flights.stop()
+            weather.stop()
+        }
     }
 
     // MARK: - Results (Figma 171:2813)
@@ -45,7 +53,7 @@ struct AgentCallView: View {
     private var resultsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Text(flights.destination)
+                Text(flights.destination.isEmpty ? weather.city : flights.destination)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Frost.nameColor)
                 if let narrowing = flights.filter.label {
@@ -66,7 +74,28 @@ struct AgentCallView: View {
             .padding(.top, 22)
             .padding(.bottom, 4)
 
-            FlightList(flights: flights.visible)
+            // Weather above the flights, in that order — asked for that way, and
+            // it is the right way round: the weather decides whether the trip
+            // happens and the flights decide how.
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    if weather.hasForecast {
+                        WeatherCard(
+                            city: weather.city,
+                            condition: weather.condition,
+                            nowC: weather.nowC,
+                            days: weather.days
+                        )
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                    if flights.hasResults {
+                        FlightList(flights: flights.visible, embedded: true)
+                    }
+                }
+                .padding(.top, 4)
+            }
         }
     }
 
