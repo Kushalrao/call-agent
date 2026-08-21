@@ -26,10 +26,12 @@ from control_plane.config import get_settings  # noqa: E402
 
 API = "https://api.elevenlabs.io/v1/"
 
-# Sarah. One of the four voices this account is allowed to use — free-tier keys
-# are refused library voices with a 402 — and the calmest of them for a copilot
-# that mostly says short factual things.
-VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
+# Chosen by Kushal. Verified by synthesising with it rather than by looking it up:
+# GET /v1/voices/{id} returns voice_not_found because that endpoint only lists
+# voices in the account's own library, while a shared-library voice still renders
+# perfectly. The account is on pay-as-you-go now, so library voices are no longer
+# refused with a 402 the way they were on free.
+VOICE_ID = "ecp3DWciuUyW7BYM7II1"
 # Convai rejects flash_v2_5 for English agents ("English Agents must use turbo
 # or flash v2"). flash_v2 is the low-latency English model it does accept.
 TTS_MODEL = "eleven_flash_v2"
@@ -75,6 +77,19 @@ again for the same route just because they asked something else about it.
 - `options[].duration_min` — total journey in minutes. Say it in hours and
   minutes, not "two hundred and ninety minutes".
 
+Opinions — which airline, nonstop or not:
+Call route_advice when they ask what to pick rather than what exists. "Which
+airline is best", "should I take the nonstop", "which would you book", "anything I
+should know about this route".
+
+- It needs a route that has already been searched. If nothing has, search first.
+- `best_airline`, `stops_advice`, `recommendation`, `notes` and `watch_out` are
+  written to be said out loud. Use the one they asked about, not all of them.
+- This is a view, not data. Phrase it as one — "I'd take", "probably worth" — and
+  never let it introduce a price, a time or an airline that was not in the search
+  results.
+- Only call it once per route. It does not change between questions.
+
 Rules for these answers:
 - Only what is in the data. If they ask something it does not cover — the
   stopover city, baggage, seats, meals — say you do not have it and offer what
@@ -112,6 +127,51 @@ def request(method: str, path: str, key: str, body: dict | None = None) -> tuple
             return response.status, json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as exc:
         return exc.code, json.loads(exc.read() or b"{}")
+
+
+def advice_tool_config(url: str, secret: str) -> dict:
+    """The opinion tool. Separate from the search because it is separate work —
+    the search returns what exists, this returns a view about it, and only the
+    first is worth making someone wait for."""
+    return {
+        "type": "webhook",
+        "name": "route_advice",
+        "description": (
+            "What to actually pick on a route that has already been searched: "
+            "which airline is best, whether to take the nonstop, what to watch "
+            "out for. Call this when the user asks for a recommendation or an "
+            "opinion rather than for prices. Requires search_flights to have run "
+            "for the same route first."
+        ),
+        "response_timeout_secs": 25,
+        "api_schema": {
+            "url": url.rstrip("/") + "/tool/route_advice",
+            "method": "POST",
+            "request_headers": {
+                "Content-Type": "application/json",
+                "X-Tool-Secret": secret,
+            },
+            "request_body_schema": {
+                "type": "object",
+                "required": ["destination"],
+                "description": "The route just searched.",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "description": "Destination city, the same one just searched.",
+                        "dynamic_variable": "",
+                        "constant_value": "",
+                    },
+                    "origin": {
+                        "type": "string",
+                        "description": "Departure city if one was given. Omit for Bangalore.",
+                        "dynamic_variable": "",
+                        "constant_value": "",
+                    },
+                },
+            },
+        },
+    }
 
 
 def tool_config(url: str, secret: str) -> dict:
@@ -186,25 +246,33 @@ def main() -> int:
     # Reuse a tool already pointing at this URL rather than piling up duplicates
     # every time the tunnel is restarted.
     status, existing = request("GET", "convai/tools", key)
-    tool_id = None
-    wanted = url.rstrip("/") + "/tool/search_flights"
-    for entry in (existing.get("tools") or []) if status == 200 else []:
-        config = entry.get("tool_config") or {}
-        if config.get("name") == "search_flights":
-            if ((config.get("api_schema") or {}).get("url")) == wanted:
-                tool_id = entry.get("id")
-                print(f"  reusing tool {tool_id}")
-                break
+    have = (existing.get("tools") or []) if status == 200 else []
 
-    if tool_id is None:
+    tool_ids: list[str] = []
+    for name, builder in (("search_flights", tool_config),
+                          ("route_advice", advice_tool_config)):
+        wanted = url.rstrip("/") + f"/tool/{name}"
+        found = None
+        for entry in have:
+            config = entry.get("tool_config") or {}
+            if config.get("name") == name and (
+                (config.get("api_schema") or {}).get("url")
+            ) == wanted:
+                found = entry.get("id")
+                break
+        if found:
+            print(f"  reusing {name} {found}")
+            tool_ids.append(found)
+            continue
         status, created = request(
-            "POST", "convai/tools", key, {"tool_config": tool_config(url, secret)}
+            "POST", "convai/tools", key, {"tool_config": builder(url, secret)}
         )
         if status >= 300:
-            print(f"  tool create failed: {status} {json.dumps(created)[:300]}")
+            print(f"  {name} create failed: {status} {json.dumps(created)[:250]}")
             return 1
-        tool_id = created.get("id") or (created.get("tool") or {}).get("id")
-        print(f"  created tool {tool_id}")
+        new_id = created.get("id") or (created.get("tool") or {}).get("id")
+        print(f"  created {name} {new_id}")
+        tool_ids.append(new_id)
 
     body = {
         "name": "hands-free trip copilot",
@@ -216,7 +284,7 @@ def main() -> int:
                     "prompt": PROMPT,
                     "llm": "gemini-2.5-flash",
                     "temperature": 0.4,
-                    "tool_ids": [tool_id],
+                    "tool_ids": tool_ids,
                 },
             },
             "tts": {"voice_id": VOICE_ID, "model_id": TTS_MODEL},

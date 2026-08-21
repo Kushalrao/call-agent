@@ -27,6 +27,7 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from agent.advice import RouteAdvice, advise
 from agent.airports import describe
 from agent.places import resolve, spoken_name
 from agent.resolver import resolve_with_model
@@ -51,6 +52,10 @@ _cache = SearchCache()
 _cached_at: dict[str, float] = {}
 CACHE_TTL_S = 600.0
 
+# Advice in flight or finished, keyed by route. Started by a search, read by
+# route_advice — which is what keeps a 13s opinion off the first answer.
+_advice: dict[str, "asyncio.Task[RouteAdvice]"] = {}
+
 
 class SearchRequest(BaseModel):
     destination: str = Field(description="City as spoken, e.g. 'Bali' or 'Dubai'")
@@ -69,6 +74,17 @@ class Option(BaseModel):
     # these are the times a person standing there would read.
     departs: str | None = None
     arrives: str | None = None
+
+
+class Advice(BaseModel):
+    """Judgement, not fact. Every number about a flight comes from the search;
+    this is opinion, and the agent's prompt says so."""
+
+    best_airline: str = ""
+    stops_advice: str = ""
+    recommendation: str = ""
+    notes: list[str] = []
+    watch_out: str | None = None
 
 
 class Summary(BaseModel):
@@ -90,6 +106,19 @@ class Summary(BaseModel):
     platforms_searched: int = 0
 
 
+class AdviceResponse(BaseModel):
+    """Judgement, not fact. Every number about a flight comes from the search;
+    this is a view, and the agent's prompt keeps it labelled as one."""
+
+    ready: bool
+    best_airline: str = ""
+    stops_advice: str = ""
+    recommendation: str = ""
+    notes: list[str] = []
+    watch_out: str | None = None
+    say: str = ""
+
+
 class SearchResponse(BaseModel):
     """`say` is the answer to read out. Everything else is there so the agent can
     be cross-questioned — which airlines fly this, is there a direct one, what is
@@ -103,6 +132,9 @@ class SearchResponse(BaseModel):
     cheapest: Option | None = None
     summary: Summary | None = None
     options: list[Option] = []
+    # Opinion about the route: which airline, nonstop or not, what to watch for.
+    # Answered from here when asked, rather than searched again or guessed.
+    advice: Advice | None = None
     took_seconds: float
 
 
@@ -188,6 +220,14 @@ async def search_flights(
         _cache.put(key, outcome)
         _cached_at[key] = time.monotonic()
 
+    # Advice is started here and deliberately not awaited. It takes ~13s — it is
+    # a thinking model reading twelve options and forming a view — and the first
+    # answer must not wait for it. By the time someone has heard the price and
+    # asked "which airline is best", it is long since ready, and route_advice
+    # returns it instantly.
+    if outcome.ok and key not in _advice:
+        _advice[key] = asyncio.create_task(advise(outcome, call_id="tool"))
+
     rows = [_row(o) for o in outcome.options]
     low_high = outcome.price_range
     direct = outcome.direct
@@ -235,6 +275,61 @@ def _spoken_list(codes: list[str]) -> str:
     if len(cities) == 2:
         return f"{cities[0]} or {cities[1]}"
     return ", ".join(cities[:-1]) + f", or {cities[-1]}"
+
+
+class AdviceRequest(BaseModel):
+    destination: str = Field(description="City as spoken, the same one just searched")
+    origin: str | None = None
+    depart_date: str | None = None
+
+
+@app.post("/tool/route_advice", response_model=AdviceResponse)
+async def route_advice(
+    body: AdviceRequest,
+    x_tool_secret: str | None = Header(default=None, alias="X-Tool-Secret"),
+) -> AdviceResponse:
+    """What to actually pick on a route that has already been searched.
+
+    Separate from the search because it is separate work: the search returns what
+    exists, this returns a view about it, and only the first is worth making
+    someone wait for.
+    """
+    _check(x_tool_secret)
+
+    destination = resolve(body.destination)
+    origin = (resolve(body.origin) if body.origin else DEFAULT_ORIGIN) or DEFAULT_ORIGIN
+    if destination is None:
+        return AdviceResponse(ready=False, say="Search that route first and I'll have a view on it.")
+    depart = body.depart_date or default_depart_date(destination, origin)
+    key = f"{origin}-{destination}-{depart}"
+
+    task = _advice.get(key)
+    if task is None:
+        # Nothing searched, so nothing to have an opinion about. Deliberately not
+        # searching here: it would turn one question into a fifteen-second wait.
+        return AdviceResponse(
+            ready=False,
+            say=f"Let me look up {spoken_name(destination)} flights first.",
+        )
+
+    try:
+        advice = await asyncio.wait_for(asyncio.shield(task), timeout=20.0)
+    except (asyncio.TimeoutError, Exception):  # noqa: BLE001
+        return AdviceResponse(ready=False, say="I don't have a view on that one yet.")
+
+    if advice.empty:
+        return AdviceResponse(ready=False, say="Nothing particular stands out on that route.")
+
+    log_event("tool.advice_served", call_id="tool", route=key)
+    return AdviceResponse(
+        ready=True,
+        best_airline=advice.best_airline,
+        stops_advice=advice.stops_advice,
+        recommendation=advice.recommendation,
+        notes=list(advice.notes),
+        watch_out=advice.watch_out,
+        say=advice.recommendation,
+    )
 
 
 def _row(option: Any) -> Option:
