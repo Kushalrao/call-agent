@@ -36,10 +36,15 @@ from typing import Any
 
 from control_plane.logging_setup import Events, log_event
 
-from .places import resolve, spoken_name
+from .places import is_indian, resolve, spoken_name
 
-DEFAULT_ORIGIN = "BLR"          # Bangalore
-DEFAULT_LEAD_DAYS = 10
+DEFAULT_ORIGIN = "BLR"          # Bangalore. Fixed for now.
+# How far ahead to look when nobody names a date. Domestic trips get booked much
+# closer in than international ones, so a single lead time is wrong for one of
+# them: two weeks out is a strange answer for Bombay, and four days out is a
+# strange answer for Bali.
+DEFAULT_LEAD_DAYS_DOMESTIC = 4
+DEFAULT_LEAD_DAYS_INTERNATIONAL = 14
 SEARCH_TIMEOUT_S = 45.0  # wait_for_all=False lands in ~7s; 45s is generous
 
 
@@ -151,9 +156,25 @@ class SearchOutcome:
         return self.cheapest is not None
 
 
-def default_depart_date(*, today: date | None = None) -> str:
-    d = (today or date.today()) + timedelta(days=DEFAULT_LEAD_DAYS)
-    return d.isoformat()
+def default_lead_days(destination: str | None, origin: str = DEFAULT_ORIGIN) -> int:
+    """Domestic if both ends are Indian airports, international otherwise.
+
+    Mirrors the extension's own split (`lib/route.js` derives `intl` the same
+    way), so a route we call domestic is a route it builds a domestic URL for.
+    """
+    domestic = is_indian(origin) and is_indian(destination)
+    return DEFAULT_LEAD_DAYS_DOMESTIC if domestic else DEFAULT_LEAD_DAYS_INTERNATIONAL
+
+
+def default_depart_date(
+    destination: str | None = None,
+    origin: str = DEFAULT_ORIGIN,
+    *,
+    today: date | None = None,
+) -> str:
+    """The date to search when the conversation has not named one."""
+    lead = default_lead_days(destination, origin)
+    return ((today or date.today()) + timedelta(days=lead)).isoformat()
 
 
 # "to Bali", "for Bali", "into Bali" — the word that marks a destination.
@@ -311,7 +332,7 @@ async def run_search(
     Imported lazily: the flight stack pulls in websockets and Chrome plumbing that
     a worker with no search to do should not pay for at boot.
     """
-    depart_date = depart_date or default_depart_date()
+    depart_date = depart_date or default_depart_date(destination, origin)
     started = time.monotonic()
 
     # "flights to Bangalore" resolves BLR as the destination, and the origin

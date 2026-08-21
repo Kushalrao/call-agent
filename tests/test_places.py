@@ -213,3 +213,40 @@ def test_the_two_utterances_stay_within_the_free_tier_budget():
 def test_an_unknown_code_still_produces_a_sayable_acknowledgement():
     from agent.search import to_acknowledgement
     assert to_acknowledgement("ZZZ").strip() != ""
+
+
+# --- default lead time -----------------------------------------------------
+
+
+def test_domestic_and_international_get_different_lead_times():
+    """Domestic trips get booked much closer in. A single lead time is wrong for
+    one of them: two weeks out is a strange answer for Bombay, and four days out
+    is a strange answer for Bali."""
+    from datetime import date
+
+    from agent.search import default_depart_date, default_lead_days
+
+    assert default_lead_days("BOM") == 4
+    assert default_lead_days("DPS") == 14
+
+    today = date(2026, 8, 21)
+    assert default_depart_date("BOM", today=today) == "2026-08-25"
+    assert default_depart_date("DPS", today=today) == "2026-09-04"
+
+
+def test_domestic_needs_both_ends_indian():
+    """Mirrors the extension's own split, so a route we call domestic is one it
+    builds a domestic URL for."""
+    from agent.search import default_lead_days
+
+    assert default_lead_days("BOM", "BLR") == 4
+    assert default_lead_days("DXB", "BLR") == 14
+    assert default_lead_days("BOM", "DXB") == 14
+
+
+def test_an_unknown_destination_is_treated_as_international():
+    """The safer default: a longer lead time returns results, a too-short one for
+    a long-haul route often returns nothing."""
+    from agent.search import default_lead_days
+
+    assert default_lead_days(None) == 14

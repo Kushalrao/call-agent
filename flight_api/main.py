@@ -97,11 +97,14 @@ async def search_flights(
 
     destination = resolve(body.destination)
     origin = resolve(body.origin) if body.origin else DEFAULT_ORIGIN
-    depart = body.depart_date or default_depart_date()
+    # Resolve the route first: the default lead time depends on whether it is
+    # domestic, so the date cannot be chosen before the cities are known.
+    depart = body.depart_date
 
     # Resolved through the curated table, so a city the model invented never
     # reaches a search URL — it comes back as a question instead.
     if destination is None:
+        depart = depart or default_depart_date(None, DEFAULT_ORIGIN)
         return SearchResponse(
             say=f"I don't have flight data for {body.destination}. "
                 "Which city should I look at?",
@@ -110,6 +113,7 @@ async def search_flights(
         )
     if origin is None:
         origin = DEFAULT_ORIGIN
+    depart = depart or default_depart_date(destination, origin)
     if origin == destination:
         return SearchResponse(
             say=f"That's where you're starting from. Where would you like to fly to?",

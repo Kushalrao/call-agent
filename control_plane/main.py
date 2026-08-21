@@ -15,7 +15,7 @@ from .db import SessionLocal, create_all
 from .events_hub import hub
 from .logging_setup import Events, log_event
 from .models import Call, CallState
-from .routers import auth, calls, users
+from .routers import agent, auth, calls, users
 from .security import user_from_token
 
 
@@ -93,6 +93,7 @@ app = FastAPI(title="hands-free control plane", version="0.1.0", lifespan=lifesp
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(calls.router)
+app.include_router(agent.router)
 
 
 @app.get("/healthz")

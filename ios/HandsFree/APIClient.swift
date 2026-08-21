@@ -29,6 +29,15 @@ struct CallInfo: Codable {
     let livekitUrl: String?
 }
 
+/// What the server hands back to start one agent conversation. No API key and no
+/// agent id — the app has no use for either, and a key in an app bundle is a
+/// published key.
+struct AgentSessionInfo: Codable {
+    let token: String
+    let livekitUrl: String
+    let conversationId: String
+}
+
 struct CallStateInfo: Codable {
     let callId: String
     let state: String
@@ -120,6 +129,13 @@ actor APIClient {
     /// moves the call to ACTIVE and dispatches the agent.
     func reportJoined(callId: String) async throws -> CallStateInfo {
         try await post("/v1/calls/\(callId)/joined", body: [String: String]())
+    }
+
+    /// Start one conversation with the voice agent.
+    ///
+    /// The server mints the room token; the app never holds an ElevenLabs key.
+    func startAgentSession() async throws -> AgentSessionInfo {
+        try await post("/v1/agent/session", body: [String: String]())
     }
 
     /// Re-mint a join token. The join window is only 120s, so a slow connect

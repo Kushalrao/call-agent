@@ -11,11 +11,13 @@
 		3349EABEF8ECC8D525B25CB5 /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A6D76AA3F5F07C8A6DC02F /* WidgetViews.swift */; };
 		702D8697E7457F09341FC9B1 /* HandsFreeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3A91B255E15CC8D0F6A874 /* HandsFreeApp.swift */; };
 		7238C8E0BD1D339F72F76BF8 /* CallSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E6225F566C8F23E32BA72C9 /* CallSurface.swift */; };
+		8D283445D069F76749D2EFE2 /* AgentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9FDF3D7DAEA79ABA89B3D2 /* AgentSession.swift */; };
 		995085DE1A4298E600118C7A /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5D1E4D14F4DE12F1B9F2C2B /* DialView.swift */; };
 		A1F283F5F2B2FA3A69E27536 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50ABE2D8C1C70AF602D26569 /* APIClient.swift */; };
 		C209A03E38654866E8E6AEB6 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE13DC09EE668433E8ADE7DA /* Config.swift */; };
 		C2A6DD0C7C40BA48633E8D11 /* WidgetModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA9A03BA2A8ED3D3D5FE8691 /* WidgetModels.swift */; };
 		CE7478C298292D69004C764A /* EventSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835A311F217B3DA9B4AE3480 /* EventSocket.swift */; };
+		D70444A7684DDC5466577F25 /* AgentCallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47456D5861CD879AE6EF37B6 /* AgentCallView.swift */; };
 		DE2026AD798A8F6E06A8FD7F /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972F051F91711468CC7F415E /* AppState.swift */; };
 		F4DD03E30F55C718243C267F /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3EDA7C0BCA31EA679C6F465D /* LiveKit */; };
 		F4FB35790B28C8646792209C /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD93FF4A99BB66BF680FA63 /* Views.swift */; };
@@ -24,10 +26,11 @@
 /* Begin PBXFileReference section */
 		0A3A91B255E15CC8D0F6A874 /* HandsFreeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandsFreeApp.swift; sourceTree = "<group>"; };
 		2E6225F566C8F23E32BA72C9 /* CallSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallSurface.swift; sourceTree = "<group>"; };
+		47456D5861CD879AE6EF37B6 /* AgentCallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCallView.swift; sourceTree = "<group>"; };
 		50ABE2D8C1C70AF602D26569 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		835A311F217B3DA9B4AE3480 /* EventSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSocket.swift; sourceTree = "<group>"; };
 		8FDFC2FE2D0EF164BBCA2FA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		93ADC6A106CE87B9C27196B4 /* HandsFree.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HandsFree.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		93ADC6A106CE87B9C27196B4 /* HandsFree.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HandsFree.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		972F051F91711468CC7F415E /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		9BA8A34D8ECEA8332AB3194C /* CallCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallCenter.swift; sourceTree = "<group>"; };
 		A0A6D76AA3F5F07C8A6DC02F /* WidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetViews.swift; sourceTree = "<group>"; };
@@ -35,6 +38,7 @@
 		BE13DC09EE668433E8ADE7DA /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		CA9A03BA2A8ED3D3D5FE8691 /* WidgetModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetModels.swift; sourceTree = "<group>"; };
 		E5D1E4D14F4DE12F1B9F2C2B /* DialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialView.swift; sourceTree = "<group>"; };
+		EF9FDF3D7DAEA79ABA89B3D2 /* AgentSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +64,8 @@
 		2790329EDBB325C53B62725E /* HandsFree */ = {
 			isa = PBXGroup;
 			children = (
+				47456D5861CD879AE6EF37B6 /* AgentCallView.swift */,
+				EF9FDF3D7DAEA79ABA89B3D2 /* AgentSession.swift */,
 				50ABE2D8C1C70AF602D26569 /* APIClient.swift */,
 				972F051F91711468CC7F415E /* AppState.swift */,
 				9BA8A34D8ECEA8332AB3194C /* CallCenter.swift */,
@@ -148,6 +154,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1F283F5F2B2FA3A69E27536 /* APIClient.swift in Sources */,
+				D70444A7684DDC5466577F25 /* AgentCallView.swift in Sources */,
+				8D283445D069F76749D2EFE2 /* AgentSession.swift in Sources */,
 				DE2026AD798A8F6E06A8FD7F /* AppState.swift in Sources */,
 				0BF709A737D39AAED5A15A4A /* CallCenter.swift in Sources */,
 				7238C8E0BD1D339F72F76BF8 /* CallSurface.swift in Sources */,
@@ -171,7 +179,6 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4GAH3YJNV9;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = HandsFree/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -312,7 +319,6 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4GAH3YJNV9;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = HandsFree/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

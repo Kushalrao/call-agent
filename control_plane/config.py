@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # left to the plugin's default.
     elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
     elevenlabs_model: str = "eleven_flash_v2_5"
+    # The conversational agent the app talks to. Configured by
+    # scripts/provision_agent.py; the app never sees this or the key.
+    elevenlabs_agent_id: str = ""
 
     # --- flight search ----------------------------------------------------
     # The Watermelon extension's checkout. flight_scout defaults to ~/Desktop,

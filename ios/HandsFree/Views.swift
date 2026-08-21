@@ -9,6 +9,9 @@ struct RootView: View {
     // equivalent but is not: an ObservableObject does not republish a nested
     // ObservableObject's changes, so the call screen would never appear.
     @EnvironmentObject private var call: CallCenter
+    // Same reason as CallCenter: a nested ObservableObject does not republish,
+    // so the agent screen would never appear if this were read through `app`.
+    @EnvironmentObject private var agent: AgentSession
 
     var body: some View {
         ZStack {
@@ -17,6 +20,12 @@ struct RootView: View {
             } else {
                 LoginView()
             }
+        }
+        // The agent conversation owns the full screen while it is running.
+        .fullScreenCover(isPresented: .constant(agent.isActive)) {
+            AgentCallView()
+                .environmentObject(app)
+                .environmentObject(agent)
         }
         // The call surface covers everything. Widgets will render on top of this
         // in Phase 1, which is why the call view owns the full screen.

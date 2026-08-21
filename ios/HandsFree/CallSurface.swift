@@ -234,3 +234,29 @@ struct CallScaffold<Card: View>: View {
         }
     }
 }
+
+/// The agent's own avatar. Not a person, so not a photo and not initials.
+struct AgentAvatar: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
+                    Color(red: 241 / 255, green: 236 / 255, blue: 214 / 255),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Image(systemName: "sparkles")
+                .font(.system(size: 44, weight: .light))
+                .foregroundStyle(Frost.nameColor)
+        }
+        .frame(width: Frost.avatarSize, height: Frost.avatarSize)
+        .clipShape(RoundedRectangle(cornerRadius: Frost.avatarRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Frost.avatarRadius, style: .continuous)
+                .strokeBorder(.white, lineWidth: Frost.avatarRingWidth)
+        )
+        .accessibilityLabel("Trip copilot")
+    }
+}

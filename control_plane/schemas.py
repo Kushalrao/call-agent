@@ -53,3 +53,15 @@ class CallStateOut(BaseModel):
 
 class VoipTokenRequest(BaseModel):
     voip_push_token: str = Field(min_length=8, max_length=255)
+
+
+class AgentSessionOut(BaseModel):
+    """What the app needs to join one agent conversation.
+
+    Deliberately does not include the ElevenLabs API key or the agent id — the
+    client has no use for either, and a key in an app bundle is a published key.
+    """
+
+    token: str
+    livekit_url: str
+    conversation_id: str
