@@ -18,6 +18,10 @@ import SwiftUI
 ///
 /// The token is minted server-side and nothing here ever sees an ElevenLabs API
 /// key: a key inside an app bundle is a published key.
+enum AgentSessionError: Error {
+    case connectTimedOut
+}
+
 @MainActor
 final class AgentSession: ObservableObject {
     enum Phase: Equatable {
@@ -76,11 +80,25 @@ final class AgentSession: ObservableObject {
             // has to be routed and running before it speaks.
             configureAudio()
 
-            try await room.connect(
-                url: session.livekitUrl,
-                token: session.token,
-                connectOptions: ConnectOptions(autoSubscribe: true)
-            )
+            // A bounded connect. WebRTC needs UDP, and on a constrained
+            // network signalling can succeed while media never establishes —
+            // which showed up as a screen stuck on "Connecting" forever with no
+            // error to act on. Better to fail and say so.
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    try await room.connect(
+                        url: session.livekitUrl,
+                        token: session.token,
+                        connectOptions: ConnectOptions(autoSubscribe: true)
+                    )
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(15))
+                    throw AgentSessionError.connectTimedOut
+                }
+                try await group.next()
+                group.cancelAll()
+            }
             try await room.localParticipant.setMicrophone(
                 enabled: true,
                 captureOptions: AudioCaptureOptions(
@@ -96,6 +114,9 @@ final class AgentSession: ObservableObject {
 
             phase = .waitingForAgent
             startTicking()
+            watchForAgent()
+        } catch AgentSessionError.connectTimedOut {
+            fail("Couldn't reach the copilot. Check the network and try again.")
         } catch is CancellationError {
             // The user backed out while connecting. Not a failure.
             await stop(reason: "cancelled")
@@ -167,6 +188,20 @@ final class AgentSession: ObservableObject {
                 session.requestRecordPermission { continuation.resume(returning: $0) }
             }
         @unknown default: return false
+        }
+    }
+
+    /// The room accepted us but no agent arrived. Usually an ElevenLabs-side
+    /// problem — out of conversation credits, or the agent failed to start — and
+    /// silently waiting forever tells the user nothing.
+    private func watchForAgent() {
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(12))
+            guard let self, case .waitingForAgent = self.phase else { return }
+            await MainActor.run {
+                self.lastError = "The copilot didn't join. Check the ElevenLabs "
+                    + "account has conversation credits left."
+            }
         }
     }
 

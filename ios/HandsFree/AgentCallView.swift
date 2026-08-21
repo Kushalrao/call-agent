@@ -64,11 +64,15 @@ struct AgentCallView: View {
         .animation(.snappy, value: agent.agentAudible)
     }
 
+    // These used to both read "Connecting", which made the two states
+    // indistinguishable on the phone — "still dialling" and "connected, the
+    // agent has not arrived" have completely different causes and the screen was
+    // hiding which one you were in.
     private var headline: String {
         switch agent.phase {
         case .idle: return ""
         case .connecting: return "Connecting"
-        case .waitingForAgent: return "Connecting"
+        case .waitingForAgent: return "Joining"
         case .live:
             return String(format: "%02d:%02d", agent.elapsed / 60, agent.elapsed % 60)
         case let .ended(reason):
@@ -78,7 +82,8 @@ struct AgentCallView: View {
 
     private var subtitle: String? {
         switch agent.phase {
-        case .waitingForAgent: return "Waiting for the copilot…"
+        case .connecting: return "Reaching the copilot…"
+        case .waitingForAgent: return "In the room — waiting for the copilot…"
         case .live: return agent.agentAudible ? nil : "Copilot has no voice yet…"
         default: return nil
         }
