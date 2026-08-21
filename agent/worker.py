@@ -66,6 +66,10 @@ ENDPOINTING_MS = int(os.environ.get("STT_ENDPOINTING_MS", "300"))
 RING_BUFFER_SECONDS = 15.0
 # How long a direct answer waits for a gap before speaking anyway.
 FLOOR_WAIT_S = 4.0
+# Spoken the moment the wake name is heard, from a cached synthesis so there is no
+# network in the path. Short because it is only there to prove we heard.
+INSTANT_ACK = "One moment."
+
 # How long the agent's own words stay eligible for echo rejection. Generous,
 # because STT finalizes well after the audio and the echo arrives later still.
 ECHO_WINDOW_S = 20.0
@@ -393,6 +397,11 @@ class CallAgent:
         self._wake_fired: set[str] = set()
         # What the agent has said recently, for echo rejection.
         self._spoken: deque[tuple[float, str]] = deque(maxlen=8)
+        # Speakers already acknowledged out loud this segment, so the destination
+        # line does not repeat what the instant acknowledgement just said.
+        self._acknowledged: set[str] = set()
+        # Addressed us, still talking. Acknowledged the moment they stop.
+        self._ack_pending: set[str] = set()
         # Per-call spend authority. Ceilings are refusals, not warnings.
         self.budget = Budget.from_env(call_id)
         self._tasks: set[asyncio.Task] = set()
@@ -439,10 +448,21 @@ class CallAgent:
             )
             if decision.fire:
                 if self.widgets is not None:
-                    # Acknowledge before any model work starts. At a ~1050ms
-                    # classifier and a multi-second reasoning turn, being
-                    # addressed and showing nothing reads as broken (5.1a).
                     self._spawn(self.widgets.status("thinking", "One moment…"))
+                # Speak on the INTERIM, not on the final. Waiting for a final
+                # transcript costs ~1700ms before the agent can make a sound, and
+                # then synthesis costs ~1000ms more. Playing a pre-rendered phrase
+                # here answers in roughly the interim latency alone.
+                # Armed here, spoken on END_OF_SPEECH. The fast path fires
+                # mid-utterance by design — that is where its speed comes from —
+                # so speaking immediately means talking over the person who just
+                # addressed us, and barge-in then cancels it a frame later. A live
+                # rehearsal did exactly that.
+                #
+                # Deepgram's end-of-speech signal arrives well before the final
+                # transcript (~1700ms), so waiting for it costs very little and
+                # buys not interrupting them.
+                self._ack_pending.add(speaker_id)
                 # Phase 3 continues here: warm the reasoning turn on the partial.
                 # Released for the same reason as the semantic path — claiming a
                 # turn with nothing to finish it leaves the agent stuck in
@@ -498,6 +518,12 @@ class CallAgent:
 
     def on_speech_end(self, speaker_id: str) -> None:
         self.policy.floor.speech_ended(speaker_id)
+        if speaker_id in self._ack_pending:
+            self._ack_pending.discard(speaker_id)
+            self._acknowledged.add(speaker_id)
+            self.remember_spoken(INSTANT_ACK)
+            # Cached, so this is playback with no network in the path at all.
+            self._spawn(self.voice.say_cached(INSTANT_ACK))
 
     def on_final(self, utterance: Any) -> None:
         # Closes the speech segment so the next phrase can fire again.
@@ -632,7 +658,12 @@ class CallAgent:
 
                 # Earcon on this one only: it is what orients attention. A second
                 # tone before the answer would just sound like a notification.
-                if speak:
+                speaker = getattr(utterance, "speaker_id", "")
+                already = speaker in self._acknowledged
+                self._acknowledged.discard(speaker)
+                if speak and not already:
+                    # Only if the fast path did not already say something. Two
+                    # acknowledgements for one request is worse than one.
                     ack = to_acknowledgement(destination)
                     self.remember_spoken(ack)
                     await self.voice.say(ack, earcon=True)
@@ -865,6 +896,9 @@ async def entrypoint(ctx: JobContext) -> None:
     # Published now, silent until needed: publishing at speak time would add a
     # renegotiation round-trip on top of an already ~600ms first byte.
     await agent.voice.publish(ctx.room)
+    # Rendered now, while nobody is waiting, so the first response costs no
+    # network at all.
+    agent._spawn(agent.voice.prepare(INSTANT_ACK))
 
     if call_id == "unknown":
         # Room metadata only reaches this process once connected.

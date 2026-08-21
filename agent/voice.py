@@ -90,6 +90,7 @@ class Voice:
     source: rtc.AudioSource | None = None
     track: rtc.LocalAudioTrack | None = None
     _tts: Any = None
+    _cached: dict[str, list[rtc.AudioFrame]] = field(default_factory=dict)
     _speaking: bool = False
     _cancel: asyncio.Event = field(default_factory=asyncio.Event)
     spoken_chars: int = 0
@@ -157,6 +158,88 @@ class Voice:
         log_event(Events.TTS_CANCELLED, call_id=self.call_id, reason=reason)
 
     # --- speaking ----------------------------------------------------------
+
+    async def prepare(self, *phrases: str) -> None:
+        """Synthesize fixed phrases once, at join, and keep the PCM in memory.
+
+        This is the whole latency story for the agent's first sound. Synthesizing
+        on demand costs a network round trip to ElevenLabs — measured at 971ms
+        warm and 2265ms cold from here — on top of the ~1700ms wait for a final
+        transcript. Nearly three seconds before a human hears anything after
+        asking a direct question, which does not read as an assistant; it reads as
+        a broken one.
+
+        A phrase that never changes does not need to be synthesized twice. Cached,
+        the same sound plays with no network at all, which moves the first
+        response to roughly the interim-transcript latency alone (~500ms) — fast
+        enough to feel like an answer rather than a delay.
+
+        Costs a handful of characters against the ElevenLabs quota, once per call.
+        """
+        tts = self._make_tts()
+        if tts is None or self.source is None:
+            return
+        for phrase in phrases:
+            if phrase in self._cached:
+                continue
+            frames: list[rtc.AudioFrame] = []
+            t = time.perf_counter()
+            try:
+                stream = tts.synthesize(phrase)
+                async for chunk in stream:
+                    frames.append(chunk.frame)
+                await stream.aclose()
+            except Exception as exc:  # noqa: BLE001
+                log_event("voice.prepare_failed", level="warn", call_id=self.call_id,
+                          phrase=phrase, error=str(exc))
+                continue
+            self._cached[phrase] = frames
+            self.spoken_chars += len(phrase)
+            log_event("voice.prepared", call_id=self.call_id, phrase=phrase,
+                      frames=len(frames),
+                      synth_ms=round((time.perf_counter() - t) * 1000, 1))
+
+    async def say_cached(self, phrase: str, *, earcon: bool = True) -> bool:
+        """Play a prepared phrase. No network, so effectively instant.
+
+        Falls back to normal synthesis if it was never prepared — better a slow
+        answer than none.
+        """
+        frames = self._cached.get(phrase)
+        if frames is None:
+            log_event("voice.cache_miss", level="warn", call_id=self.call_id,
+                      phrase=phrase)
+            return await self.say(phrase, earcon=earcon)
+        if not self.available or self._speaking:
+            return False
+
+        self._speaking = True
+        self._cancel.clear()
+        started = time.perf_counter()
+        log_event(Events.TTS_START, call_id=self.call_id, cached=True,
+                  chars=len(phrase), text=phrase)
+        try:
+            if earcon:
+                for frame in earcon_frames():
+                    if self._cancel.is_set():
+                        break
+                    await self.source.capture_frame(frame)
+            for frame in frames:
+                if self._cancel.is_set():
+                    break
+                await self.source.capture_frame(frame)
+        except Exception as exc:  # noqa: BLE001
+            log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
+                      stage="say_cached", error=str(exc))
+            return False
+        finally:
+            self._speaking = False
+        log_event("voice.finished", call_id=self.call_id, cached=True,
+                  completed=not self._cancel.is_set(),
+                  first_byte_ms=0.0,
+                  total_ms=round((time.perf_counter() - started) * 1000, 1),
+                  spoken_chars_total=self.spoken_chars)
+        return not self._cancel.is_set()
 
     async def say(self, text: str, *, earcon: bool = True) -> bool:
         """Synthesize and play. Returns whether it finished uninterrupted."""

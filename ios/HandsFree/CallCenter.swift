@@ -405,7 +405,30 @@ final class CallCenter: NSObject, ObservableObject {
 
             // Publish the mic only after connecting, so a failed connect never
             // leaves a hot mic with nowhere to send audio.
-            try await room.localParticipant.setMicrophone(enabled: !isMuted)
+            //
+            // Voice processing is requested explicitly rather than left to the
+            // defaults. Two phones on a table with `.defaultToSpeaker` is the
+            // worst case for echo: each speaker feeds the other's microphone, and
+            // the agent's own voice comes back on both tracks. A live call
+            // transcribed the agent's "Checking Dubai flights." as one of the
+            // humans.
+            //
+            // `.platform` prefers Apple's Voice Processing I/O, which is
+            // materially better at speaker-mode echo than WebRTC's software AEC
+            // because it has the real reference signal from the output hardware.
+            // Mode `.automatic` falls back to software if VPIO is unavailable, so
+            // this cannot make things worse than the default.
+            try await room.localParticipant.setMicrophone(
+                enabled: !isMuted,
+                captureOptions: AudioCaptureOptions(
+                    echoCancellation: true,
+                    autoGainControl: true,
+                    noiseSuppression: true,
+                    echoCancellationMode: .automatic,
+                    autoGainControlMode: .automatic,
+                    noiseSuppressionMode: .automatic
+                )
+            )
 
             // And verify it actually published. setMicrophone can complete
             // without producing a track, which is the silent failure above.
