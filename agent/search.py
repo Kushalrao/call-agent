@@ -45,7 +45,11 @@ DEFAULT_ORIGIN = "BLR"          # Bangalore. Fixed for now.
 # strange answer for Bali.
 DEFAULT_LEAD_DAYS_DOMESTIC = 4
 DEFAULT_LEAD_DAYS_INTERNATIONAL = 14
-SEARCH_TIMEOUT_S = 45.0  # wait_for_all=False lands in ~7s; 45s is generous
+SEARCH_TIMEOUT_S = 45.0
+# What the screen may show. Generous rather than unlimited: a scrolling list of
+# two hundred rows is already more than anyone reads, and it bounds memory and
+# render cost without ever being the reason a flight is missing.
+SCREEN_LIMIT = 200  # wait_for_all=False lands in ~7s; 45s is generous
 
 
 # A page the extension's manifest matches, used only to wake its service worker.
@@ -490,10 +494,14 @@ async def run_search(
                              error=detail, elapsed_s=elapsed)
 
     record = getattr(result, "record", None) or {}
-    # Twelve per platform, not the widget's three. A phone card shows three rows;
-    # a voice agent has to answer "which airlines fly this", "is there a direct
-    # one", "what is the range" — and it can only answer from what it was given.
-    payload = to_widget_payload(record, limit=12) if record else {}
+    # Everything the platforms returned, not a sample.
+    #
+    # A real route comes back with around ninety usable flights and this was
+    # taking twelve, which quietly threw away seven eighths of the search — and
+    # made the summary wrong too, since "which airlines fly this" was answered
+    # from a twelfth of the data. The card can scroll; only the model needs a cap,
+    # and that one is applied later where it belongs.
+    payload = to_widget_payload(record, limit=SCREEN_LIMIT) if record else {}
     all_options, platforms_seen, total = collect_options(payload)
     cheapest = all_options[0] if all_options else None
     elapsed = time.monotonic() - started
@@ -507,6 +515,4 @@ async def run_search(
     )
     return SearchOutcome(origin, destination, depart_date, cheapest,
                          platforms_seen, total, elapsed_s=elapsed,
-                         # Bounded: enough to answer follow-ups, not so much that
-                         # the model starts reading out fare codes.
-                         options=tuple(all_options[:24]))
+                         options=tuple(all_options[:SCREEN_LIMIT]))

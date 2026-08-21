@@ -78,6 +78,8 @@ _weather: dict[str, Any] = {}
 # questions in one conversation, and re-fetching would just add latency.
 _weather_cache: dict[str, tuple[float, Any]] = {}
 WEATHER_TTL_S = 900.0
+# How many rows the agent itself is given. The card gets all of them.
+MODEL_LIMIT = 12
 FAILURE_COOLDOWN_S = 90.0
 
 
@@ -293,7 +295,9 @@ async def search_flights(
             "destination_city": spoken_name(destination) or destination,
             "depart_date": depart,
             "searched_at": time.time(),
-            "options": rows[:12],
+            # Every row, for the card. It scrolls, and a flight missing from the
+            # screen because of a number I picked is worse than a long list.
+            "options": rows,
         })
     low_high = outcome.price_range
     direct = outcome.direct
@@ -315,9 +319,12 @@ async def search_flights(
             fastest=_row(outcome.fastest) if outcome.fastest else None,
             platforms_searched=outcome.platforms_seen,
         ) if outcome.ok else None,
-        # Capped. Twelve rows is enough to be cross-questioned about and few
-        # enough that the model does not start reading out fare codes.
-        options=rows[:12],
+        # The model's cap stays. Ninety rows in a prompt is expensive and an agent
+        # reading them out is unusable — twelve is enough to be cross-questioned
+        # about, and the summary above is computed over all of them, so "which
+        # airlines fly this" is answered from the whole search rather than a
+        # twelfth of it.
+        options=rows[:MODEL_LIMIT],
         took_seconds=round(time.monotonic() - started, 1),
     )
 
