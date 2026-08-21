@@ -56,6 +56,26 @@ CACHE_TTL_S = 600.0
 # route_advice — which is what keeps a 13s opinion off the first answer.
 _advice: dict[str, "asyncio.Task[RouteAdvice]"] = {}
 
+# The most recent search, for the phone to display.
+#
+# Deliberately a single slot rather than per-session. The agent runs on
+# ElevenLabs and the phone connects to it directly, so there is no session id
+# shared between the two — and this is a one-user dev build. When it is not, this
+# has to become per-conversation, and the honest way to do that is for the agent
+# to pass its conversation id into the tool call.
+_latest: dict[str, Any] = {}
+
+# Routes that just failed, so a repeat asks the browser again only after a pause.
+# Failures are deliberately *not* put in the result cache: caching one bad moment
+# would lock a route out for the full ten minutes.
+_failures: dict[str, float] = {}
+FAILURE_COOLDOWN_S = 90.0
+
+
+def _failed_recently(key: str) -> bool:
+    at = _failures.get(key)
+    return at is not None and (time.monotonic() - at) < FAILURE_COOLDOWN_S
+
 
 class SearchRequest(BaseModel):
     destination: str = Field(description="City as spoken, e.g. 'Bali' or 'Dubai'")
@@ -74,6 +94,9 @@ class Option(BaseModel):
     # these are the times a person standing there would read.
     departs: str | None = None
     arrives: str | None = None
+    # 24-hour, for the card. "18:00" fits the designed time group; "6:00 pm" wraps.
+    departs_clock: str | None = None
+    arrives_clock: str | None = None
 
 
 class Advice(BaseModel):
@@ -199,11 +222,24 @@ async def search_flights(
 
     key = f"{origin}-{destination}-{depart}"
     started = time.monotonic()
+
     cached = _cache.get(key)
     fresh = cached is not None and (time.monotonic() - _cached_at.get(key, 0)) < CACHE_TTL_S
-    if fresh and cached is not None:
+    if fresh and cached is not None and cached.ok:
         outcome = cached
-        log_event("tool.cache_hit", call_id="tool", route=key)
+        log_event("tool.cache_hit", call_id="tool", route=key,
+                  age_s=round(time.monotonic() - _cached_at.get(key, 0), 1))
+    elif _failed_recently(key):
+        # A route that just failed fails fast rather than spending another 45s in
+        # the browser. Repeating a timeout is not a retry, it is the same wait
+        # again — and the agent asking twice in a conversation is normal.
+        log_event("tool.recent_failure", call_id="tool", route=key)
+        return SearchResponse(
+            say=f"The flight sites still aren't responding for "
+                f"{spoken_name(destination)}. Try another destination?",
+            found=False, origin=origin, destination=destination,
+            depart_date=depart, took_seconds=round(time.monotonic() - started, 1),
+        )
     else:
         try:
             outcome = await asyncio.wait_for(
@@ -211,14 +247,20 @@ async def search_flights(
                 timeout=60.0,
             )
         except asyncio.TimeoutError:
+            _failures[key] = time.monotonic()
             return SearchResponse(
                 say=f"The flight sites are being slow for {spoken_name(destination)}. "
-                    "Want me to try again?",
+                    "Want me to try somewhere else?",
                 found=False, origin=origin, destination=destination,
                 depart_date=depart, took_seconds=round(time.monotonic() - started, 1),
             )
-        _cache.put(key, outcome)
-        _cached_at[key] = time.monotonic()
+        if outcome.ok:
+            # Only successes are cached. Caching a failure would lock the route
+            # out for the whole ten-minute window over one bad moment.
+            _cache.put(key, outcome)
+            _cached_at[key] = time.monotonic()
+        else:
+            _failures[key] = time.monotonic()
 
     # Advice is started here and deliberately not awaited. It takes ~13s — it is
     # a thinking model reading twelve options and forming a view — and the first
@@ -229,6 +271,20 @@ async def search_flights(
         _advice[key] = asyncio.create_task(advise(outcome, call_id="tool"))
 
     rows = [_row(o) for o in outcome.options]
+
+    # Published for the phone to pick up. Set before returning, so by the time the
+    # agent has finished saying the price the card already has the rows.
+    if outcome.ok:
+        _latest.clear()
+        _latest.update({
+            "route": key,
+            "origin": origin,
+            "destination": destination,
+            "destination_city": spoken_name(destination) or destination,
+            "depart_date": depart,
+            "searched_at": time.time(),
+            "options": rows[:12],
+        })
     low_high = outcome.price_range
     direct = outcome.direct
     return SearchResponse(
@@ -275,6 +331,40 @@ def _spoken_list(codes: list[str]) -> str:
     if len(cities) == 2:
         return f"{cities[0]} or {cities[1]}"
     return ", ".join(cities[:-1]) + f", or {cities[-1]}"
+
+
+class LatestResponse(BaseModel):
+    """What the phone renders. Rows only — no advice, no summary: the card shows
+    flights, and everything else is spoken."""
+
+    route: str = ""
+    origin: str = ""
+    destination: str = ""
+    destination_city: str = ""
+    depart_date: str = ""
+    searched_at: float = 0.0
+    options: list[Option] = []
+
+
+@app.get("/session/latest", response_model=LatestResponse)
+async def latest() -> LatestResponse:
+    """The last search, so the phone can show it the moment it lands.
+
+    Polled rather than pushed. The alternative is the agent telling the phone over
+    its data channel, which is how the *filtering* works — but results should
+    appear even if that channel is silent, and a poll cannot fail in a way that
+    leaves the screen empty while the agent is talking about prices.
+    """
+    # Deliberately unauthenticated, unlike every other endpoint here.
+    #
+    # It returns published flight prices — nothing private, and nothing that
+    # costs anything to serve. The secret exists to stop strangers driving a real
+    # Chrome on someone's laptop, and that protection stays on the search. Putting
+    # it here too would mean shipping the secret inside the iOS bundle, which is
+    # the same "key in an app binary" problem in a smaller costume.
+    if not _latest:
+        return LatestResponse()
+    return LatestResponse(**_latest)
 
 
 class AdviceRequest(BaseModel):
@@ -341,4 +431,6 @@ def _row(option: Any) -> Option:
         duration_min=option.duration_min,
         departs=option.depart_spoken,
         arrives=option.arrive_spoken,
+        departs_clock=option.depart_clock,
+        arrives_clock=option.arrive_clock,
     )

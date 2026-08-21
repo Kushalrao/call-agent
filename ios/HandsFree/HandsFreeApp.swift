@@ -7,6 +7,7 @@ struct HandsFreeApp: App {
     // human, no ringing, no CallKit. Threading "is this a call or an agent?"
     // through CallCenter would have had the two breaking each other.
     @StateObject private var agent = AgentSession()
+    @StateObject private var flights = FlightStore()
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +15,7 @@ struct HandsFreeApp: App {
                 .environmentObject(app)
                 .environmentObject(app.callCenter)
                 .environmentObject(agent)
+                .environmentObject(flights)
                 .preferredColorScheme(.dark)
         }
     }

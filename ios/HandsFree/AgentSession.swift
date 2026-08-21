@@ -46,10 +46,26 @@ final class AgentSession: ObservableObject {
     @Published private(set) var agentAudible = false
     @Published private(set) var isMuted = false
     @Published private(set) var elapsed = 0
+    /// What the agent has asked the card to show. Owned here because it arrives
+    /// on the same channel as everything else the agent says.
+    @Published var filter: FlightFilter = .none
+    @Published private(set) var showFlights = false
 
     private var room: Room?
     private var conversationID: String?
     private var ticker: Task<Void, Never>?
+
+    init() {
+        #if DEBUG
+            // Screenshot hook, mirroring CallCenter's. `agent_preview active`
+            // renders the agent call screen with no ElevenLabs session at all,
+            // which is the only way to capture it from the command line.
+            if UserDefaults.standard.string(forKey: "agent_preview") == "active" {
+                phase = .live
+                agentAudible = true
+            }
+        #endif
+    }
 
     var isActive: Bool {
         switch phase {
@@ -165,6 +181,8 @@ final class AgentSession: ObservableObject {
         }
         room = nil
         agentAudible = false
+        showFlights = false
+        filter = .none
         phase = .ended(reason)
         // Back to idle so the dial screen returns without a stale end state.
         try? await Task.sleep(for: .milliseconds(400))
@@ -175,6 +193,68 @@ final class AgentSession: ObservableObject {
         isMuted.toggle()
         let muted = isMuted
         Task { try? await room?.localParticipant.setMicrophone(enabled: !muted) }
+    }
+
+    /// Handle a client-side tool call from the agent.
+    ///
+    /// ElevenLabs can run tools on the device rather than on a server, which is
+    /// the only way the agent can act on the screen: it says "show me the direct
+    /// ones" and the card narrows in the same breath.
+    ///
+    /// Note what is *not* sent over this channel — flight data. The agent asks for
+    /// a shape ("direct only", "under twenty thousand") and the phone applies it
+    /// to rows it already fetched itself. If the agent re-sent the flights, every
+    /// number on screen would have been through a language model, and they would
+    /// eventually stop matching the search.
+    private func handleClientTool(_ payload: [String: Any]) {
+        let call = payload["client_tool_call"] as? [String: Any] ?? payload
+        let name = call["tool_name"] as? String ?? ""
+        let id = call["tool_call_id"] as? String ?? ""
+        let params = call["parameters"] as? [String: Any] ?? [:]
+        log("client tool: \(name) \(params)")
+
+        switch name {
+        case "show_flights":
+            showFlights = true
+            filter = .none
+        case "filter_flights":
+            showFlights = true
+            var next = FlightFilter()
+            next.directOnly = params["direct_only"] as? Bool ?? false
+            next.cheapestOnly = params["cheapest_only"] as? Bool ?? false
+            if let airline = params["airline"] as? String, !airline.isEmpty {
+                next.airline = airline
+            }
+            if let cap = params["max_price_inr"] as? Int, cap > 0 {
+                next.maxPriceInr = cap
+            } else if let cap = params["max_price_inr"] as? Double, cap > 0 {
+                next.maxPriceInr = Int(cap)
+            }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                filter = next
+            }
+        default:
+            respondToTool(id: id, result: "unknown tool", isError: true)
+            return
+        }
+        respondToTool(id: id, result: "ok", isError: false)
+    }
+
+    /// Every client tool call must be answered or the agent waits on it.
+    private func respondToTool(id: String, result: String, isError: Bool) {
+        guard !id.isEmpty, let room else { return }
+        let payload: [String: Any] = [
+            "type": "client_tool_result",
+            "tool_call_id": id,
+            "result": result,
+            "is_error": isError,
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
+        Task {
+            try? await room.localParticipant.publish(
+                data: data, options: DataPublishOptions(reliable: true)
+            )
+        }
     }
 
     /// The opening handshake ElevenLabs' own SDKs send once the room is joined.
@@ -313,6 +393,33 @@ final class AgentSession: ObservableObject {
 // MARK: - RoomDelegate
 
 extension AgentSession: RoomDelegate {
+    nonisolated func room(
+        _: Room,
+        participant _: RemoteParticipant?,
+        didReceiveData data: Data,
+        forTopic _: String,
+        encryptionType _: EncryptionType
+    ) {
+        Task { @MainActor in
+            guard
+                let raw = try? JSONSerialization.jsonObject(with: data),
+                let payload = raw as? [String: Any]
+            else { return }
+            let type = payload["type"] as? String ?? ""
+            switch type {
+            case "client_tool_call":
+                handleClientTool(payload)
+            case "agent_response", "user_transcript", "audio", "ping",
+                 "internal_tentative_agent_response", "agent_response_correction":
+                // Known chatter. Listed rather than ignored silently so an
+                // unexpected message type is visibly unexpected below.
+                break
+            default:
+                log("unhandled agent message: \(type)")
+            }
+        }
+    }
+
     nonisolated func room(_: Room, participantDidConnect participant: RemoteParticipant) {
         Task { @MainActor in
             // Any remote participant in an ElevenLabs conversation room is the

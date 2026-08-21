@@ -94,3 +94,18 @@ def spoken_time(value: str, iata: str | None = None) -> str | None:
     hour = parsed.hour % 12 or 12
     suffix = "am" if parsed.hour < 12 else "pm"
     return f"{hour}:{parsed.minute:02d} {suffix}"
+
+
+def clock_time(value: str, iata: str | None = None) -> str | None:
+    """"18:00" — 24-hour, for the screen.
+
+    The card and the voice want different formats and neither is wrong. The design
+    uses 24-hour because "18:00" is five characters and fits the 174pt time group;
+    "6:00 pm" is eight and wraps onto a second line, which is exactly what
+    happened when the spoken form was reused on screen. Speech wants the opposite:
+    nobody says "eighteen hundred".
+    """
+    parsed = _parse(to_local(value, iata))
+    if parsed is None:
+        return None
+    return f"{parsed.hour:02d}:{parsed.minute:02d}"

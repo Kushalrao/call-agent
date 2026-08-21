@@ -9,6 +9,7 @@ import SwiftUI
 struct AgentCallView: View {
     @EnvironmentObject private var app: AppState
     @EnvironmentObject private var agent: AgentSession
+    @EnvironmentObject private var flights: FlightStore
 
     var body: some View {
         CallScaffold(
@@ -17,7 +18,67 @@ struct AgentCallView: View {
             onButton: { Task { await agent.stop() } }
         ) {
             FrostPanel {
-                FrostAvatar(
+                if flights.hasResults {
+                    // Results replace the avatars rather than sitting under them:
+                    // the card is a fixed size from the design, and twelve rows
+                    // plus two 123pt avatars do not fit in it.
+                    resultsCard
+                } else {
+                    waitingCard
+                }
+            }
+        }
+        .animation(.snappy, value: agent.phase)
+        .animation(.snappy, value: agent.agentAudible)
+        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: flights.visible.count)
+        .task { flights.start() }
+        // The agent asks for a shape; the store owns the rows. Kept as a one-way
+        // sync so there is a single place that decides what is on screen.
+        // Single-parameter onChange: the two-parameter form is iOS 17+, and this
+        // app ships to 16 for the iPhone X.
+        .onChange(of: agent.filter) { newFilter in flights.filter = newFilter }
+        .onDisappear { flights.stop() }
+    }
+
+    // MARK: - Results (Figma 171:2813)
+
+    private var resultsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Text(flights.destination)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Frost.nameColor)
+                if let narrowing = flights.filter.label {
+                    Text(narrowing)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Frost.nameColor.opacity(0.7))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.white.opacity(0.55), in: Capsule())
+                }
+                Spacer()
+                Text(timerText)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Frost.nameColor)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 4)
+
+            FlightList(flights: flights.visible)
+        }
+    }
+
+    private var timerText: String {
+        String(format: "%02d:%02d", agent.elapsed / 60, agent.elapsed % 60)
+    }
+
+    private var waitingCard: some View {
+        ZStack(alignment: .top) {
+            Color.clear.frame(width: Frost.cardSize.width, height: Frost.cardSize.height)
+
+            FrostAvatar(
                     url: nil,
                     name: app.session?.displayName ?? "You",
                     ringed: false
@@ -57,11 +118,8 @@ struct AgentCallView: View {
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(Frost.nameColor)
                         .offset(y: 450)
-                }
             }
         }
-        .animation(.snappy, value: agent.phase)
-        .animation(.snappy, value: agent.agentAudible)
     }
 
     // These used to both read "Connecting", which made the two states

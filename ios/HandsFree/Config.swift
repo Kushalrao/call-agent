@@ -30,6 +30,18 @@ enum Config {
     /// Where ElevenLabs mints conversation tokens. Public agents need no key.
     static let agentTokenURL = "https://api.elevenlabs.io/v1/convai/conversation/token"
 
+    /// Where the flight tool lives. A cloudflare quick tunnel in dev, so it
+    /// changes on every restart — hence a UserDefaults override rather than only
+    /// a constant. Only the public /session/latest endpoint is read from the app;
+    /// the search endpoint keeps its secret and is called by ElevenLabs, not by us.
+    private static let flightToolKey = "flight_tool_base_url"
+    private static let defaultFlightToolURL = "https://ltd-here-rendering-retained.trycloudflare.com"
+
+    static var flightToolURL: String {
+        get { UserDefaults.standard.string(forKey: flightToolKey) ?? defaultFlightToolURL }
+        set { UserDefaults.standard.set(newValue, forKey: flightToolKey) }
+    }
+
     static var baseURL: String {
         get { UserDefaults.standard.string(forKey: baseURLKey) ?? defaultBaseURL }
         set { UserDefaults.standard.set(newValue, forKey: baseURLKey) }

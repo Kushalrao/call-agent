@@ -77,6 +77,21 @@ again for the same route just because they asked something else about it.
 - `options[].duration_min` — total journey in minutes. Say it in hours and
   minutes, not "two hundred and ninety minutes".
 
+Showing things on screen:
+The caller has a screen with the flight list on it. Keep it in step with what you
+are saying.
+
+- Call show_flights as soon as a search returns, so they see the list you are
+  about to talk about.
+- Call filter_flights whenever you talk about a subset. "The direct ones" means
+  direct_only. "IndiGo has three" means airline IndiGo. "Under twenty thousand"
+  means max_price_inr. "The cheapest one" means cheapest_only.
+- Filter as you speak, not afterwards. The point is that the screen shows what
+  they are hearing about.
+- Call show_flights again to go back to everything.
+- Never pass flight details to these tools. They only take a shape; the screen
+  already has the real numbers.
+
 Opinions — which airline, nonstop or not:
 Call route_advice when they ask what to pick rather than what exists. "Which
 airline is best", "should I take the nonstop", "which would you book", "anything I
@@ -96,7 +111,10 @@ Rules for these answers:
   you do.
 - The same flight can appear twice at different prices. That is two real offers
   on two sites, not a mistake.
-- Search again only if the route, date or origin changes.
+- Search again only if the route, date or origin changes. One search per route per
+  conversation: everything else about it is already in the result you were given,
+  and searching again makes them wait ten seconds to be told what you already
+  know.
 
 What you must not do:
 - Never invent a price, an airline, a flight time or an availability. Every fact
@@ -170,6 +188,65 @@ def advice_tool_config(url: str, secret: str) -> dict:
                     },
                 },
             },
+        },
+    }
+
+
+def show_flights_tool() -> dict:
+    """A client tool: runs on the phone, not on a server.
+
+    This is the only way the agent can act on the screen. Note what it does *not*
+    carry — flight data. The agent asks for a shape and the phone applies it to
+    rows it fetched itself, so every number on screen came from the search rather
+    than through a language model.
+    """
+    return {
+        "type": "client",
+        "name": "show_flights",
+        "description": (
+            "Show the full list of flights on the caller's screen. Call this right "
+            "after a search returns, so they can see what you are talking about."
+        ),
+        "expects_response": False,
+        # An object, not a list: the client tool schema takes the same JSON-schema
+        # shape the webhook tools do ("Input should be a valid dictionary").
+        "parameters": {"type": "object", "properties": {}, "required": []},
+    }
+
+
+def filter_flights_tool() -> dict:
+    return {
+        "type": "client",
+        "name": "filter_flights",
+        "description": (
+            "Narrow what is shown on the caller's screen to match what you are "
+            "recommending. Call this whenever you talk about a subset — the direct "
+            "ones, a particular airline, options under a budget, or the single "
+            "cheapest. Pass only the fields that apply."
+        ),
+        "expects_response": False,
+        "parameters": {
+            "type": "object",
+            "description": "Only the fields that apply.",
+            "properties": {
+                "direct_only": {
+                    "type": "boolean",
+                    "description": "Show only nonstop flights.",
+                },
+                "cheapest_only": {
+                    "type": "boolean",
+                    "description": "Show only the single cheapest flight.",
+                },
+                "airline": {
+                    "type": "string",
+                    "description": "Show only this airline, e.g. 'IndiGo'.",
+                },
+                "max_price_inr": {
+                    "type": "number",
+                    "description": "Show only flights at or below this rupee price.",
+                },
+            },
+            "required": [],
         },
     }
 
@@ -249,24 +326,26 @@ def main() -> int:
     have = (existing.get("tools") or []) if status == 200 else []
 
     tool_ids: list[str] = []
-    for name, builder in (("search_flights", tool_config),
-                          ("route_advice", advice_tool_config)):
-        wanted = url.rstrip("/") + f"/tool/{name}"
+    webhooks = (("search_flights", tool_config), ("route_advice", advice_tool_config))
+    clients = (("show_flights", show_flights_tool), ("filter_flights", filter_flights_tool))
+
+    for name, builder in webhooks + clients:
+        is_client = name in {n for n, _ in clients}
+        wanted = None if is_client else url.rstrip("/") + f"/tool/{name}"
         found = None
         for entry in have:
             config = entry.get("tool_config") or {}
-            if config.get("name") == name and (
-                (config.get("api_schema") or {}).get("url")
-            ) == wanted:
+            if config.get("name") != name:
+                continue
+            if is_client or ((config.get("api_schema") or {}).get("url")) == wanted:
                 found = entry.get("id")
                 break
         if found:
             print(f"  reusing {name} {found}")
             tool_ids.append(found)
             continue
-        status, created = request(
-            "POST", "convai/tools", key, {"tool_config": builder(url, secret)}
-        )
+        config = builder() if is_client else builder(url, secret)
+        status, created = request("POST", "convai/tools", key, {"tool_config": config})
         if status >= 300:
             print(f"  {name} create failed: {status} {json.dumps(created)[:250]}")
             return 1

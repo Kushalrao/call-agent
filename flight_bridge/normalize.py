@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .localtime import spoken_time, to_local
+from .localtime import clock_time, spoken_time, to_local
 
 # The extension knows about IndiGo, but we deliberately ignore it: dropped from
 # scope on 2026-08-21.
@@ -101,6 +101,9 @@ def _option(f: dict[str, Any], origin: str = "", destination: str = "") -> dict[
         # guess a timezone: "8:10 am".
         "depart_spoken": spoken_time(str(depart), origin),
         "arrive_spoken": spoken_time(arrive_raw, destination) if arrive_raw else None,
+        # 24-hour for the screen; see clock_time for why the two differ.
+        "depart_clock": clock_time(str(depart), origin),
+        "arrive_clock": clock_time(arrive_raw, destination) if arrive_raw else None,
         "stops": _as_int(_first(f, "stops")) or 0,
         "duration_min": _as_int(_first(f, "durationMin", "durationTotalMinutes")),
         "price": {"amount": price, "currency": "INR"},

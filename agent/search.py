@@ -145,6 +145,9 @@ class Cheapest:
     # platform, which is not something a listener can catch.
     depart_spoken: str | None = None
     arrive_spoken: str | None = None
+    # 24-hour, for the card. The screen and the voice want different formats.
+    depart_clock: str | None = None
+    arrive_clock: str | None = None
 
 
 @dataclass(frozen=True)
@@ -319,6 +322,8 @@ def collect_options(payload: dict[str, Any]) -> tuple[list[Cheapest], int, int]:
                 duration_min=option.get("duration_min"),
                 depart_spoken=option.get("depart_spoken"),
                 arrive_spoken=option.get("arrive_spoken"),
+                depart_clock=option.get("depart_clock"),
+                arrive_clock=option.get("arrive_clock"),
             ))
 
     collected.sort(key=lambda o: o.price)
