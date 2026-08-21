@@ -187,6 +187,11 @@ def parse_note(response: object) -> str:
             if not text:
                 continue
             data = json.loads(text)
+            if not isinstance(data, dict):
+                # `[]` parses fine and then blows up on .get — the schema makes an
+                # object overwhelmingly likely, but "overwhelmingly likely" is not
+                # a reason for a spoken-output path to be able to raise.
+                return ""
             note = str(data.get("note") or "").strip()
             # A model that ignored "one sentence" gets trimmed rather than
             # trusted: this is spoken over a wait, and a paragraph would still be
@@ -194,7 +199,7 @@ def parse_note(response: object) -> str:
             if len(note.split()) > 30:
                 return ""
             return note
-    except (ValueError, TypeError, json.JSONDecodeError):
+    except (AttributeError, ValueError, TypeError, json.JSONDecodeError):
         return ""
     return ""
 
