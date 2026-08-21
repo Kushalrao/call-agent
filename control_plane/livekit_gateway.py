@@ -317,7 +317,56 @@ async def ensure_room_metadata(*, room_name: str, call_id: str) -> None:
         await lk.aclose()
 
 
-async def prepare_and_dispatch(*, room_name: str, call_id: str) -> None:
-    """Background chain that runs once a call goes ACTIVE."""
+async def agent_present(*, room_name: str) -> bool:
+    """Whether an agent participant is actually in the room."""
+    lk = _client()
+    try:
+        participants = await lk.room.list_participants(
+            api.ListParticipantsRequest(room=room_name)
+        )
+        return any(
+            '"kind":"agent"' in (p.metadata or "") or p.identity.startswith("agent-")
+            for p in participants.participants
+        )
+    except Exception:  # noqa: BLE001
+        return False
+    finally:
+        await lk.aclose()
+
+
+async def prepare_and_dispatch(
+    *, room_name: str, call_id: str, attempts: int = 3, wait_s: float = 6.0
+) -> None:
+    """Background chain that runs once a call goes ACTIVE.
+
+    Dispatch is verified rather than assumed. The worker's connection to LiveKit
+    drops and re-registers on an unstable network — observed twice in three
+    minutes on a phone hotspot, with "No PONG received after 15 seconds". A
+    dispatch issued in that window goes to a registration that has just been
+    replaced, and nothing picks it up: the humans get a perfectly good call with
+    no agent in it, and the only trace is an `agent.dispatched` with no matching
+    `agent.joined`.
+
+    So it is retried. A duplicate dispatch is harmless — the worker takes one job
+    per room — while a lost one silently removes the entire product from the call.
+    """
     await ensure_room_metadata(room_name=room_name, call_id=call_id)
-    await dispatch_agent(room_name=room_name, call_id=call_id)
+
+    for attempt in range(1, attempts + 1):
+        await dispatch_agent(room_name=room_name, call_id=call_id)
+        await asyncio.sleep(wait_s)
+        if await agent_present(room_name=room_name):
+            if attempt > 1:
+                log_event("agent.dispatch_recovered", call_id=call_id,
+                          room=room_name, attempts=attempt)
+            return
+        log_event(
+            "agent.dispatch_unconfirmed",
+            level="warn",
+            call_id=call_id,
+            room=room_name,
+            attempt=attempt,
+            detail="dispatched but no agent joined — retrying"
+            if attempt < attempts
+            else "giving up; the call continues without the agent",
+        )

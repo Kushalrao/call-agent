@@ -93,6 +93,10 @@ class Voice:
     _cached: dict[str, list[rtc.AudioFrame]] = field(default_factory=dict)
     _speaking: bool = False
     _cancel: asyncio.Event = field(default_factory=asyncio.Event)
+    # Serialises the keepalive against real speech so silence is never
+    # interleaved into a sentence.
+    _floor: asyncio.Lock = field(default_factory=asyncio.Lock)
+    _keepalive: asyncio.Task | None = None
     spoken_chars: int = 0
 
     # --- setup -------------------------------------------------------------
@@ -112,9 +116,46 @@ class Voice:
                       op="publish_voice_track", error=str(exc))
             self.source = None
             return False
+        # Keep the track producing RTP even when the agent has nothing to say.
+        #
+        # This is the fix for "the agent never speaks". Server-side everything was
+        # correct — a Python subscriber recorded 64s containing the agent's actual
+        # speech at peak 27844 — but on iOS nothing was ever heard. A track that
+        # emits no packets at all for the first minute of a call looks inactive to
+        # the SFU and to a subscriber, so no playback path is established; by the
+        # time real audio arrives there is nothing listening for it. Continuous
+        # silence keeps the stream established, which costs a few kbit/s of zeros.
+        self._keepalive = asyncio.create_task(self._emit_silence())
+
         log_event("voice.track_published", call_id=self.call_id,
                   sample_rate=SAMPLE_RATE, queue_ms=QUEUE_MS)
         return True
+
+    async def _emit_silence(self) -> None:
+        """Push silent frames whenever the agent is not talking.
+
+        `capture_frame` paces itself against the source's queue, so this runs at
+        real time on its own without a sleep loop to tune.
+        """
+        samples = SAMPLE_RATE * FRAME_MS // 1000
+        blank = b"\x00" * (samples * 2)
+        while self.source is not None:
+            try:
+                if self._speaking:
+                    await asyncio.sleep(0.02)
+                    continue
+                async with self._floor:
+                    if self._speaking:
+                        continue
+                    await self.source.capture_frame(rtc.AudioFrame(
+                        data=blank, sample_rate=SAMPLE_RATE, num_channels=1,
+                        samples_per_channel=samples,
+                    ))
+            except asyncio.CancelledError:
+                return
+            except Exception:  # noqa: BLE001
+                # Never let the keepalive take the call down.
+                await asyncio.sleep(0.2)
 
     def _make_tts(self) -> Any:
         if self._tts is not None:
@@ -219,15 +260,16 @@ class Voice:
         log_event(Events.TTS_START, call_id=self.call_id, cached=True,
                   chars=len(phrase), text=phrase)
         try:
-            if earcon:
-                for frame in earcon_frames():
+            async with self._floor:
+                if earcon:
+                    for frame in earcon_frames():
+                        if self._cancel.is_set():
+                            break
+                        await self.source.capture_frame(frame)
+                for frame in frames:
                     if self._cancel.is_set():
                         break
                     await self.source.capture_frame(frame)
-            for frame in frames:
-                if self._cancel.is_set():
-                    break
-                await self.source.capture_frame(frame)
         except Exception as exc:  # noqa: BLE001
             log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
                       stage="say_cached", error=str(exc))
@@ -265,6 +307,7 @@ class Voice:
 
         log_event(Events.TTS_START, call_id=self.call_id, chars=len(text), text=text)
         try:
+            await self._floor.acquire()
             if earcon:
                 # Plays while synthesis is still in flight, so it is free latency.
                 for frame in earcon_frames():
@@ -288,6 +331,8 @@ class Voice:
             log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
                       stage="tts", error=str(exc))
         finally:
+            if self._floor.locked():
+                self._floor.release()
             self._speaking = False
             self.spoken_chars += len(text)
             log_event(

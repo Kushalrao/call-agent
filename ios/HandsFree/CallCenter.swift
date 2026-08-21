@@ -418,7 +418,21 @@ final class CallCenter: NSObject, ObservableObject {
             // would auto-configure, but that leaves the category and options to
             // it — and `.defaultToSpeaker` matters here, because people are
             // looking at the screen rather than holding the phone to an ear.
-            if !usesCallKit { configureAudioSession() }
+            if !usesCallKit {
+                configureAudioSession()
+                // Nothing else sets output routing on this path. The two places
+                // that did are both CXProvider delegates, and they no longer
+                // fire — so playback was left wherever LiveKit put it, which for
+                // .playAndRecord/.voiceChat is the earpiece. A phone lying on a
+                // table with call audio in the earpiece is indistinguishable
+                // from an agent that never spoke, which is exactly what this
+                // looked like. The design is screen-facing, so: speaker.
+                AudioManager.shared.audioSession.isSpeakerOutputPreferred = true
+                // With CallKit gone nothing hands us an activated session, so the
+                // engine has to be explicitly allowed to run.
+                _ = try? AudioManager.shared.setEngineAvailability(.default)
+                log("audio routed to speaker, engine enabled (no CallKit)")
+            }
 
             // Publish the mic only after connecting, so a failed connect never
             // leaves a hot mic with nowhere to send audio.
@@ -721,6 +735,34 @@ extension CallCenter: RoomDelegate {
             if phase == .active || phase == .reconnecting || phase == .connecting {
                 await teardown(reason: "disconnected")
             }
+        }
+    }
+
+    // There was no track-subscription delegate at all, which meant nothing on the
+    // client could say whether the agent's audio was ever subscribed or played.
+    // "The agent never speaks" and "the agent's track was never subscribed" look
+    // identical from the outside, and they are completely different bugs.
+    nonisolated func room(
+        _: Room,
+        participant: RemoteParticipant,
+        didSubscribeTrack publication: RemoteTrackPublication
+    ) {
+        Task { @MainActor in
+            let who = participant.identity?.stringValue ?? "?"
+            let isAgent = participant.metadata?.contains("\"kind\":\"agent\"") == true
+            log("subscribed \(publication.kind == .audio ? "audio" : "other") from "
+                + "\(who)\(isAgent ? " (AGENT)" : "") muted=\(publication.isMuted)")
+        }
+    }
+
+    nonisolated func room(
+        _: Room,
+        participant: RemoteParticipant,
+        didUnsubscribeTrack publication: RemoteTrackPublication
+    ) {
+        Task { @MainActor in
+            log("UNSUBSCRIBED \(publication.kind == .audio ? "audio" : "other") from "
+                + "\(participant.identity?.stringValue ?? "?")")
         }
     }
 

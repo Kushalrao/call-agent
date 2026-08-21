@@ -220,3 +220,93 @@ async def test_healthz(client: httpx.AsyncClient) -> None:
     r = await client.get("/healthz")
     assert r.status_code == 200
     assert r.json()["ok"] is True
+
+
+# --- dispatch is verified, not assumed -------------------------------------
+
+
+def test_dispatch_retries_until_the_agent_is_actually_in_the_room(monkeypatch):
+    """A live call was dispatched and no agent ever joined: the worker's LiveKit
+    connection had dropped and re-registered seconds earlier ("No PONG received
+    after 15 seconds"), so the dispatch went to a registration that no longer
+    existed. The humans got a working call with the product missing from it, and
+    the only trace was an `agent.dispatched` with no matching `agent.joined`."""
+    import asyncio
+
+    from control_plane import livekit_gateway as gw
+
+    dispatches: list[str] = []
+    presence = iter([False, False, True])
+
+    async def fake_dispatch(*, room_name, call_id):
+        dispatches.append(room_name)
+
+    async def fake_present(*, room_name):
+        return next(presence)
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(gw, "ensure_room_metadata", lambda **_: _done())
+    monkeypatch.setattr(gw, "dispatch_agent", fake_dispatch)
+    monkeypatch.setattr(gw, "agent_present", fake_present)
+    monkeypatch.setattr(gw.asyncio, "sleep", no_sleep)
+
+    asyncio.run(gw.prepare_and_dispatch(room_name="r", call_id="c"))
+    assert len(dispatches) == 3, "must keep trying until the agent is really there"
+
+
+def test_dispatch_stops_once_the_agent_is_present(monkeypatch):
+    """A duplicate dispatch is harmless, but pointless — the worker takes one job
+    per room."""
+    import asyncio
+
+    from control_plane import livekit_gateway as gw
+
+    dispatches: list[str] = []
+
+    async def fake_dispatch(*, room_name, call_id):
+        dispatches.append(room_name)
+
+    async def fake_present(*, room_name):
+        return True
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(gw, "ensure_room_metadata", lambda **_: _done())
+    monkeypatch.setattr(gw, "dispatch_agent", fake_dispatch)
+    monkeypatch.setattr(gw, "agent_present", fake_present)
+    monkeypatch.setattr(gw.asyncio, "sleep", no_sleep)
+
+    asyncio.run(gw.prepare_and_dispatch(room_name="r", call_id="c"))
+    assert len(dispatches) == 1
+
+
+def test_giving_up_never_breaks_the_call(monkeypatch):
+    """After the last attempt it returns quietly. Two people are talking to each
+    other; a missing agent is a missing feature, not a failed call."""
+    import asyncio
+
+    from control_plane import livekit_gateway as gw
+
+    async def fake_dispatch(*, room_name, call_id):
+        return None
+
+    async def never(*, room_name):
+        return False
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(gw, "ensure_room_metadata", lambda **_: _done())
+    monkeypatch.setattr(gw, "dispatch_agent", fake_dispatch)
+    monkeypatch.setattr(gw, "agent_present", never)
+    monkeypatch.setattr(gw.asyncio, "sleep", no_sleep)
+
+    # Must not raise.
+    asyncio.run(gw.prepare_and_dispatch(room_name="r", call_id="c", attempts=2))
+
+
+async def _done():
+    return None
