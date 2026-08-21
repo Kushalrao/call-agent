@@ -133,6 +133,16 @@ final class AgentSession: ObservableObject {
                 return
             }
 
+            // Tell the agent to begin.
+            //
+            // This is what was missing. Connecting to the room is not enough:
+            // the agent waits for the client to open the conversation, and
+            // without it the call sits there. Two attempts showed up in
+            // ElevenLabs as 30-second conversations with **zero messages** —
+            // a room that connected fine and an agent that never said its first
+            // line, because nobody had told it to start.
+            try await sendConversationInit(room)
+
             phase = .waitingForAgent
             startTicking()
             watchForAgent()
@@ -165,6 +175,28 @@ final class AgentSession: ObservableObject {
         isMuted.toggle()
         let muted = isMuted
         Task { try? await room?.localParticipant.setMicrophone(enabled: !muted) }
+    }
+
+    /// The opening handshake ElevenLabs' own SDKs send once the room is joined.
+    ///
+    /// Reliable delivery, because a dropped one means a conversation that never
+    /// starts rather than a glitch.
+    private func sendConversationInit(_ room: Room) async throws {
+        let payload: [String: Any] = [
+            "type": "conversation_initiation_client_data",
+            // No overrides: the prompt, voice and first message are configured
+            // on the agent (scripts/provision_agent.py) rather than sent from a
+            // client, so a phone build cannot drift from what was provisioned.
+            "conversation_config_override": [:] as [String: Any],
+            "custom_llm_extra_body": [:] as [String: Any],
+            "dynamic_variables": [:] as [String: Any],
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        try await room.localParticipant.publish(
+            data: data,
+            options: DataPublishOptions(reliable: true)
+        )
+        log("sent conversation_initiation_client_data")
     }
 
     /// Mint a conversation token directly. Public agent, so no key.
@@ -246,8 +278,11 @@ final class AgentSession: ObservableObject {
             try? await Task.sleep(for: .seconds(12))
             guard let self, case .waitingForAgent = self.phase else { return }
             await MainActor.run {
-                self.lastError = "The copilot didn't join. Check the ElevenLabs "
-                    + "account has conversation credits left."
+                // Deliberately not naming a cause. The first version of this
+                // blamed conversation credits, and the credits were fine — the
+                // agent was waiting to be told to start. A guess in an error
+                // message sends the next person down the wrong path.
+                self.lastError = "The copilot joined the room but never spoke."
             }
         }
     }
@@ -261,6 +296,12 @@ final class AgentSession: ObservableObject {
                 await MainActor.run { self.elapsed += 1 }
             }
         }
+    }
+
+    private func log(_ message: String) {
+        #if DEBUG
+            print("[agent] \(message)")
+        #endif
     }
 
     private func fail(_ message: String) {
