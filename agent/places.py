@@ -112,6 +112,20 @@ CITY_TO_IATA: dict[str, str] = {
     "agartala": "IXA",
 
     # A few outside India where the common name and the dataset disagree.
+    # The dataset files some airports under the village they sit in rather than
+    # the place people mean — ZNZ is "Kiembi Samaki" — which also left the city
+    # note with nothing recognisable to write about.
+    "zanzibar": "ZNZ",
+    "bora bora": "BOB",
+    "phu quoc": "PQC",
+    "krabi": "KBV",
+    "koh samui": "USM", "samui": "USM",
+    "langkawi": "LGK",
+    "penang": "PEN",
+    "siem reap": "SAI", "angkor": "SAI",
+    "luang prabang": "LPQ",
+    "pokhara": "PKR",
+    "paro": "PBH", "bhutan": "PBH",
     "yangon": "RGN", "rangoon": "RGN",
     "beijing": "PEK", "peking": "PEK",
 

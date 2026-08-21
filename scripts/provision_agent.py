@@ -47,6 +47,15 @@ How to talk:
   better than "twelve thousand five hundred and eight".
 
 Searching flights:
+- When they name somewhere they want to fly, first call city_note for that city,
+  then call search_flights. Say the note while the search runs — the search takes
+  around ten seconds and that silence is the worst part of the conversation.
+- Say the note as your own remark, not as a quotation. Lead with it, then mention
+  you are checking flights: "The Old Quarter is still organised by trade there,
+  there's a whole street of doorframes. Let me see what flights look like."
+- Say it once. Do not repeat it later in the conversation.
+- If city_note comes back empty, just say you are checking flights. Do not invent
+  something about the city yourself.
 - When they name somewhere they want to fly, call search_flights. Do not wait to
   be asked — that is what you are for.
 - The search takes several seconds. Say what you are doing in a few words first,
@@ -145,6 +154,47 @@ def request(method: str, path: str, key: str, body: dict | None = None) -> tuple
             return response.status, json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as exc:
         return exc.code, json.loads(exc.read() or b"{}")
+
+
+def city_note_tool_config(url: str, secret: str) -> dict:
+    """Something to say while the search runs.
+
+    Separate from the search because it has to be spoken *during* the wait. A note
+    bundled into the search response would arrive with the prices, having missed
+    the eight seconds of silence it exists to fill.
+    """
+    return {
+        "type": "webhook",
+        "name": "city_note",
+        "description": (
+            "Get one interesting, true sentence about a city. Call this first, "
+            "before search_flights, and say it while the search runs so the caller "
+            "is not sitting in silence. Returns quickly. If it comes back empty, "
+            "just say you are checking flights."
+        ),
+        "response_timeout_secs": 8,
+        "api_schema": {
+            "url": url.rstrip("/") + "/tool/city_note",
+            "method": "POST",
+            "request_headers": {
+                "Content-Type": "application/json",
+                "X-Tool-Secret": secret,
+            },
+            "request_body_schema": {
+                "type": "object",
+                "required": ["destination"],
+                "description": "The city about to be searched.",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "description": "Destination city as the user said it.",
+                        "dynamic_variable": "",
+                        "constant_value": "",
+                    },
+                },
+            },
+        },
+    }
 
 
 def advice_tool_config(url: str, secret: str) -> dict:
@@ -326,7 +376,8 @@ def main() -> int:
     have = (existing.get("tools") or []) if status == 200 else []
 
     tool_ids: list[str] = []
-    webhooks = (("search_flights", tool_config), ("route_advice", advice_tool_config))
+    webhooks = (("search_flights", tool_config), ("route_advice", advice_tool_config),
+                ("city_note", city_note_tool_config))
     clients = (("show_flights", show_flights_tool), ("filter_flights", filter_flights_tool))
 
     for name, builder in webhooks + clients:

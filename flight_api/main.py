@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 
 from agent.advice import RouteAdvice, advise
 from agent.airports import describe
+from agent.citynote import NOTES
 from agent.places import resolve, spoken_name
 from agent.resolver import resolve_with_model
 from agent.search import (
@@ -366,6 +367,38 @@ async def latest() -> LatestResponse:
     if not _latest:
         return LatestResponse()
     return LatestResponse(**_latest)
+
+
+class CityNoteRequest(BaseModel):
+    destination: str = Field(description="City as spoken")
+
+
+class CityNoteResponse(BaseModel):
+    """One sentence to say while the search runs. Empty when we have nothing
+    worth saying — silence beats a confident invention about somewhere the
+    person is about to fly."""
+
+    note: str = ""
+    city: str = ""
+
+
+@app.post("/tool/city_note", response_model=CityNoteResponse)
+async def city_note(
+    body: CityNoteRequest,
+    x_tool_secret: str | None = Header(default=None, alias="X-Tool-Secret"),
+) -> CityNoteResponse:
+    """Something worth hearing while the flight search runs.
+
+    Its own tool, called before the search, because it has to be *said* during the
+    wait rather than after it — a note that arrives with the prices has missed the
+    silence it existed to fill. Around a second cold and instant once cached.
+    """
+    _check(x_tool_secret)
+    destination = resolve(body.destination)
+    if destination is None:
+        return CityNoteResponse()
+    note = await NOTES.note_for(destination, call_id="tool")
+    return CityNoteResponse(note=note, city=spoken_name(destination) or body.destination)
 
 
 class AdviceRequest(BaseModel):

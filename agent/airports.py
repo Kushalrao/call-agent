@@ -238,3 +238,13 @@ def city_name(code: str | None) -> str | None:
     if not airport:
         return None
     return (airport["city"].split("-")[0].split("/")[0]).strip() or None
+
+
+def airport_name(code: str | None) -> str | None:
+    """The airport's own name. Sometimes the only place the recognisable name
+    appears: ZNZ is filed under the city "Kiembi Samaki" but named "Abeid Amani
+    Karume International" for Zanzibar."""
+    if not code:
+        return None
+    airport = _dataset().get(code.upper())
+    return airport["name"] if airport else None
