@@ -138,6 +138,12 @@ class Cheapest:
     price: int
     stops: int
     currency: str = "INR"
+    # Minutes. Safe to expose and compare: every platform reports a duration in
+    # the same units. Absolute departure times deliberately are not carried here
+    # — Ixigo publishes them in UTC while Cleartrip publishes local time with an
+    # offset, so comparing or speaking them would be wrong by hours until that is
+    # normalised.
+    duration_min: int | None = None
 
 
 @dataclass(frozen=True)
@@ -150,10 +156,42 @@ class SearchOutcome:
     total_options: int = 0
     error: str = ""
     elapsed_s: float = 0.0
+    # Every usable flight, cheapest first. The agent used to be handed only the
+    # single best fare, so any follow-up — which airlines fly this, is there a
+    # direct one, what is the range — had nothing to answer from and it said so.
+    options: tuple[Cheapest, ...] = ()
 
     @property
     def ok(self) -> bool:
         return self.cheapest is not None
+
+    @property
+    def airlines(self) -> list[str]:
+        """Distinct carriers, cheapest fare first. Order is useful: it answers
+        "who flies this" and "who is cheapest" in one list."""
+        seen: list[str] = []
+        for option in self.options:
+            for carrier in option.carrier.split(","):
+                carrier = carrier.strip()
+                if carrier and carrier != "\u2014" and carrier not in seen:
+                    seen.append(carrier)
+        return seen
+
+    @property
+    def direct(self) -> tuple[Cheapest, ...]:
+        return tuple(o for o in self.options if o.stops == 0)
+
+    @property
+    def price_range(self) -> tuple[int, int] | None:
+        if not self.options:
+            return None
+        prices = [o.price for o in self.options]
+        return (min(prices), max(prices))
+
+    @property
+    def fastest(self) -> Cheapest | None:
+        timed = [o for o in self.options if o.duration_min]
+        return min(timed, key=lambda o: o.duration_min or 0) if timed else None
 
 
 def default_lead_days(destination: str | None, origin: str = DEFAULT_ORIGIN) -> int:
@@ -251,16 +289,49 @@ def origin_from(text: str, *, default: str = DEFAULT_ORIGIN) -> str:
     return default
 
 
-def pick_cheapest(payload: dict[str, Any]) -> tuple[Cheapest | None, int, int]:
-    """Lowest fare across platforms. A min, not a merge.
+def collect_options(payload: dict[str, Any]) -> tuple[list[Cheapest], int, int]:
+    """Every usable flight across platforms, cheapest first.
 
-    `to_widget_payload` has already sorted each platform's options by price and
-    trimmed them, so this only has to compare the heads.
+    Still a min rather than a merge — each platform's rows are kept as its own,
+    which is the standing rule for this data. Nothing is deduplicated across
+    sites, so the same flight can appear twice at two prices, and that is
+    correct: they really are two different offers.
     """
+    collected: list[Cheapest] = []
+    platforms_seen = 0
+
+    for label, site in (payload.get("platforms") or {}).items():
+        options = site.get("options") or []
+        if options:
+            platforms_seen += 1
+        for option in options:
+            amount = (option.get("price") or {}).get("amount")
+            if amount is None:
+                continue
+            collected.append(Cheapest(
+                platform=label,
+                carrier=option.get("carrier") or "\u2014",
+                flight=option.get("flight") or "",
+                price=int(amount),
+                stops=int(option.get("stops") or 0),
+                currency=(option.get("price") or {}).get("currency") or "INR",
+                duration_min=option.get("duration_min"),
+            ))
+
+    collected.sort(key=lambda o: o.price)
+    return collected, platforms_seen, len(collected)
+
+
+def pick_cheapest(payload: dict[str, Any]) -> tuple[Cheapest | None, int, int]:
+    """Kept for callers that only want the single best fare."""
+    options, platforms_seen, total = collect_options(payload)
+    return (options[0] if options else None), platforms_seen, total
+
+
+def _unused_pick(payload: dict[str, Any]) -> tuple[Cheapest | None, int, int]:
     best: Cheapest | None = None
     platforms_seen = 0
     total = 0
-
     for label, site in (payload.get("platforms") or {}).items():
         options = site.get("options") or []
         if options:
@@ -407,8 +478,12 @@ async def run_search(
                              error=detail, elapsed_s=elapsed)
 
     record = getattr(result, "record", None) or {}
-    payload = to_widget_payload(record) if record else {}
-    cheapest, platforms_seen, total = pick_cheapest(payload)
+    # Twelve per platform, not the widget's three. A phone card shows three rows;
+    # a voice agent has to answer "which airlines fly this", "is there a direct
+    # one", "what is the range" — and it can only answer from what it was given.
+    payload = to_widget_payload(record, limit=12) if record else {}
+    all_options, platforms_seen, total = collect_options(payload)
+    cheapest = all_options[0] if all_options else None
     elapsed = time.monotonic() - started
 
     log_event(
@@ -419,4 +494,7 @@ async def run_search(
         elapsed_s=round(elapsed, 1),
     )
     return SearchOutcome(origin, destination, depart_date, cheapest,
-                         platforms_seen, total, elapsed_s=elapsed)
+                         platforms_seen, total, elapsed_s=elapsed,
+                         # Bounded: enough to answer follow-ups, not so much that
+                         # the model starts reading out fare codes.
+                         options=tuple(all_options[:24]))

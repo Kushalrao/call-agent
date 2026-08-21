@@ -30,7 +30,7 @@ import anthropic
 from control_plane.config import get_settings
 from control_plane.logging_setup import log_event
 
-from .airports import describe, lookup
+from .airports import describe
 from .budget import Budget, BudgetExceeded
 
 MODEL = "claude-haiku-4-5"
@@ -78,10 +78,14 @@ Return only names. No codes, no explanations, no airports."""
 async def resolve_with_model(
     phrase: str, *, call_id: str = "resolver", budget: Budget | None = None
 ) -> tuple[str | None, list[str], str]:
-    """(code, candidate descriptions, reason).
+    """(code, candidate IATA codes, reason).
 
-    A single code means it resolved. Several candidates mean the caller should
-    ask. Neither means we genuinely do not know, which is a fine answer.
+    A single code means it resolved. Several codes mean the caller should ask —
+    codes rather than dataset labels, because how to *say* a place is the
+    caller's decision and the dataset's labels are not speech: it calls Bali
+    "Denpasar-Bali Island" and Kochi "Cochin".
+
+    Neither means we genuinely do not know, which is a fine answer.
     """
     settings = get_settings()
     if not settings.anthropic_api_key or not phrase.strip():
@@ -124,20 +128,24 @@ async def resolve_with_model(
     except (AttributeError, IndexError, ValueError, TypeError, json.JSONDecodeError):
         return None, [], "unparseable"
 
-    # Every suggestion goes through the same lookup a user's own words would.
-    # This is the guarantee: nothing the model invented can reach a search URL.
-    resolved: list[tuple[str, str]] = []
+    # Every suggestion goes through the same resolution a user's own words would
+    # — the full layered one, curated table included. Validating against the raw
+    # dataset instead meant "Goa" became Genoa, Italy and "Thailand" became Don
+    # Mueang rather than Suvarnabhumi: every curated decision was bypassed.
+    from .places import resolve as resolve_place
+
+    resolved: list[str] = []
     for city in suggested:
-        code = lookup(city)
-        if code and all(code != existing for existing, _ in resolved):
-            resolved.append((code, describe(code) or city))
+        code = resolve_place(city)
+        if code and code not in resolved:
+            resolved.append(code)
 
     log_event("resolver.result", call_id=call_id, phrase=phrase, latency_ms=ms,
-              suggested=suggested, resolved=[c for c, _ in resolved],
-              ambiguous=ambiguous)
+              suggested=suggested, resolved=resolved, ambiguous=ambiguous,
+              described=[describe(c) for c in resolved])
 
     if not resolved:
         return None, [], "no_match"
     if ambiguous and len(resolved) > 1:
-        return None, [name for _, name in resolved], "ambiguous"
-    return resolved[0][0], [], "resolved"
+        return None, resolved, "ambiguous"
+    return resolved[0], [], "resolved"

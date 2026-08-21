@@ -63,10 +63,35 @@ class Option(BaseModel):
     price_inr: int
     stops: int
     platform: str
+    # Minutes. Deliberately no departure time: Ixigo publishes times in UTC while
+    # Cleartrip publishes local time with an offset, so any absolute time here
+    # would be wrong by hours for one of them. Duration is directly comparable.
+    duration_min: int | None = None
+
+
+class Summary(BaseModel):
+    """Answers to the questions people actually ask next.
+
+    Precomputed rather than left to the model. Asked "which is cheapest" from a
+    list of twelve rows a model will usually get it right and occasionally not,
+    and there is no reason to leave arithmetic to inference.
+    """
+
+    total_found: int
+    price_low_inr: int | None = None
+    price_high_inr: int | None = None
+    airlines: list[str] = []
+    direct_available: bool = False
+    direct_count: int = 0
+    cheapest_direct: Option | None = None
+    fastest: Option | None = None
+    platforms_searched: int = 0
 
 
 class SearchResponse(BaseModel):
-    """Deliberately small. `say` is what the agent should read out."""
+    """`say` is the answer to read out. Everything else is there so the agent can
+    be cross-questioned — which airlines fly this, is there a direct one, what is
+    the range — without searching again."""
 
     say: str
     found: bool
@@ -74,7 +99,8 @@ class SearchResponse(BaseModel):
     destination: str
     depart_date: str
     cheapest: Option | None = None
-    alternatives: list[Option] = []
+    summary: Summary | None = None
+    options: list[Option] = []
     took_seconds: float
 
 
@@ -119,8 +145,7 @@ async def search_flights(
         depart = depart or default_depart_date(None, DEFAULT_ORIGIN)
         if options:
             # Two real cities a long way apart. Choosing for them is not help.
-            joined = " or ".join(o.split(",")[0] for o in options[:3])
-            say = f"{body.destination} has a few options — {joined}. Which one?"
+            say = f"{body.destination} — {_spoken_list(options[:3])}. Which one?"
         else:
             say = (f"I couldn't find an airport for {body.destination}. "
                    "Which city should I look at?")
@@ -161,23 +186,60 @@ async def search_flights(
         _cache.put(key, outcome)
         _cached_at[key] = time.monotonic()
 
-    options = _shape(outcome)
+    rows = [_row(o) for o in outcome.options]
+    low_high = outcome.price_range
+    direct = outcome.direct
     return SearchResponse(
         say=to_sentence(outcome),
         found=outcome.ok,
         origin=origin,
         destination=destination,
         depart_date=depart,
-        cheapest=options[0] if options else None,
-        alternatives=options[1:3],
+        cheapest=_row(outcome.cheapest) if outcome.cheapest else None,
+        summary=Summary(
+            total_found=outcome.total_options,
+            price_low_inr=low_high[0] if low_high else None,
+            price_high_inr=low_high[1] if low_high else None,
+            airlines=outcome.airlines,
+            direct_available=bool(direct),
+            direct_count=len(direct),
+            cheapest_direct=_row(direct[0]) if direct else None,
+            fastest=_row(outcome.fastest) if outcome.fastest else None,
+            platforms_searched=outcome.platforms_seen,
+        ) if outcome.ok else None,
+        # Capped. Twelve rows is enough to be cross-questioned about and few
+        # enough that the model does not start reading out fare codes.
+        options=rows[:12],
         took_seconds=round(time.monotonic() - started, 1),
     )
 
 
-def _shape(outcome: Any) -> list[Option]:
-    """Only the cheapest per platform, so the model sees a handful of rows rather
-    than hundreds — it cannot read out what it was never given."""
-    if not outcome.ok or outcome.cheapest is None:
-        return []
-    c = outcome.cheapest
-    return [Option(carrier=c.carrier, price_inr=c.price, stops=c.stops, platform=c.platform)]
+def _spoken_list(codes: list[str]) -> str:
+    """Airport codes as a list a person would actually say.
+
+    Two things this gets right that the obvious version does not. `" or ".join`
+    produces "Bangkok or Phuket or Chiang Mai", which nobody says; and two items
+    take no comma at all — "Tokyo, or Osaka" reads as a stumble.
+
+    Names come from spoken_name, so the curated ones win: the dataset calls Bali
+    "Denpasar-Bali Island" and Kochi "Cochin", and neither is a word anyone uses.
+    """
+    cities = [spoken_name(c) for c in codes]
+    cities = [c for c in cities if c]
+    if not cities:
+        return ""
+    if len(cities) == 1:
+        return cities[0]
+    if len(cities) == 2:
+        return f"{cities[0]} or {cities[1]}"
+    return ", ".join(cities[:-1]) + f", or {cities[-1]}"
+
+
+def _row(option: Any) -> Option:
+    return Option(
+        carrier=option.carrier,
+        price_inr=option.price,
+        stops=option.stops,
+        platform=option.platform,
+        duration_min=option.duration_min,
+    )

@@ -74,6 +74,47 @@ CITY_TO_IATA: dict[str, str] = {
     "hanoi": "HAN",
     "da nang": "DAD", "danang": "DAD",
     "saigon": "SGN", "ho chi minh": "SGN", "ho chi minh city": "SGN",
+
+    # --- renamed cities -----------------------------------------------------
+    # `airportsdata` still carries older anglicised names: it knows Calicut,
+    # Trichy and Poona, and has never heard of Kozhikode, Tiruchirappalli or
+    # Vizag. People say the modern ones, and so does any model asked which cities
+    # are in Kerala — which is exactly why "Kerala" resolved to nothing.
+    "kochi": "COK", "cochin": "COK",
+    "kozhikode": "CCJ", "calicut": "CCJ",
+    "tiruchirappalli": "TRZ", "trichy": "TRZ",
+    "visakhapatnam": "VTZ", "vizag": "VTZ",
+    "vadodara": "BDQ", "baroda": "BDQ",
+    "puducherry": "PNY", "pondicherry": "PNY",
+    "mangaluru": "IXE", "mangalore": "IXE",
+    "hubballi": "HBX", "hubli": "HBX",
+    "belagavi": "IXG", "belgaum": "IXG",
+    "coimbatore": "CJB",
+    "madurai": "IXM",
+    "tirupati": "TIR",
+    "indore": "IDR",
+    "nagpur": "NAG",
+    "bhubaneswar": "BBI",
+    "guwahati": "GAU",
+    "patna": "PAT",
+    "raipur": "RPR",
+    "surat": "STV",
+    "amritsar": "ATQ",
+    "chandigarh": "IXC",
+    "dehradun": "DED",
+    "bagdogra": "IXB", "siliguri": "IXB",
+    "ranchi": "IXR",
+    "jodhpur": "JDH",
+    "udaipur": "UDR",
+    "bhopal": "BHO",
+    "aurangabad": "IXU",
+    "imphal": "IMF",
+    "agartala": "IXA",
+
+    # A few outside India where the common name and the dataset disagree.
+    "yangon": "RGN", "rangoon": "RGN",
+    "beijing": "PEK", "peking": "PEK",
+
 }
 
 # Every code the table can emit; used to validate a code the model volunteered.
