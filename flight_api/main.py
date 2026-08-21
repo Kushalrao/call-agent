@@ -27,7 +27,9 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from agent.airports import describe
 from agent.places import resolve, spoken_name
+from agent.resolver import resolve_with_model
 from agent.search import (
     DEFAULT_ORIGIN,
     SearchCache,
@@ -101,14 +103,29 @@ async def search_flights(
     # domestic, so the date cannot be chosen before the cities are known.
     depart = body.depart_date
 
-    # Resolved through the curated table, so a city the model invented never
-    # reaches a search URL — it comes back as a question instead.
+    # Nothing matched by name. Before giving up, ask a model to turn what they
+    # said into city names — countries, landmarks and descriptions are language,
+    # not data. Whatever it suggests is looked up in the same airport dataset, so
+    # nothing it invented can reach a search URL.
+    options: list[str] = []
+    if destination is None:
+        destination, options, reason = await resolve_with_model(
+            body.destination, call_id="tool"
+        )
+        log_event("tool.model_resolved", call_id="tool",
+                  phrase=body.destination, code=destination, reason=reason)
+
     if destination is None:
         depart = depart or default_depart_date(None, DEFAULT_ORIGIN)
+        if options:
+            # Two real cities a long way apart. Choosing for them is not help.
+            joined = " or ".join(o.split(",")[0] for o in options[:3])
+            say = f"{body.destination} has a few options — {joined}. Which one?"
+        else:
+            say = (f"I couldn't find an airport for {body.destination}. "
+                   "Which city should I look at?")
         return SearchResponse(
-            say=f"I don't have flight data for {body.destination}. "
-                "Which city should I look at?",
-            found=False, origin=origin or DEFAULT_ORIGIN,
+            say=say, found=False, origin=origin or DEFAULT_ORIGIN,
             destination=body.destination, depart_date=depart, took_seconds=0.0,
         )
     if origin is None:

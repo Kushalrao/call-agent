@@ -202,19 +202,27 @@ def split_route(text: str) -> tuple[str | None, str | None]:
         return None, resolve(text)
 
     left, right = padded[: cut[0]], padded[cut[0] + len(cut[1]) :]
-    destination = resolve(right)
-    origin = resolve(left)
 
-    # "flights to Bali from Bangalore" — the marker order is reversed, so what
-    # landed on the right is actually the origin.
-    if destination is not None and any(m in padded for m in _ORIGIN_MARKERS):
-        for marker in _ORIGIN_MARKERS:
-            idx = padded.rfind(marker)
-            if idx > cut[0]:
-                swapped = resolve(padded[idx + len(marker):])
-                if swapped is not None and swapped != destination:
-                    origin, destination = swapped, resolve(left) or destination
-                break
+    # "flights to Nice from Bangalore" — the right side holds both, so it has to
+    # be cut at the origin marker before resolving. Resolving the whole tail
+    # instead found Bangalore and called it the destination.
+    tail_origin: str | None = None
+    for marker in _ORIGIN_MARKERS:
+        idx = right.find(marker)
+        if idx != -1:
+            tail_origin = right[idx + len(marker) :]
+            right = right[:idx]
+            break
+
+    destination = resolve(right)
+    origin = resolve(left) or (resolve(tail_origin) if tail_origin else None)
+
+    # If the destination side yielded nothing but the tail did, the phrasing was
+    # reversed enough that the tail is the real destination.
+    if destination is None and tail_origin:
+        destination = resolve(tail_origin)
+        if destination is not None and origin == destination:
+            origin = resolve(left)
 
     if destination is None:
         # "to" was in the sentence but not before a place we know.

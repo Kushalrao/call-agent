@@ -123,27 +123,61 @@ def resolve(place: str | None) -> str | None:
             candidate = " ".join(words[i : i + size])
             if candidate in CITY_TO_IATA:
                 return CITY_TO_IATA[candidate]
-    return None
+
+    # Nothing curated matched, so fall through to every airport in the world
+    # (agent/airports.py). The curated table is consulted first and always wins,
+    # because it encodes intent rather than geography: "Bali" means the island,
+    # whose airport is at Denpasar — and the global dataset also contains a
+    # village called Bali in Cameroon with its own airstrip. Data cannot know
+    # which one a person planning a holiday meant.
+    from .airports import lookup as _global_lookup
+
+    return _global_lookup(place)
+
+
+# The handful this product flies from, kept as a fast path and as a guarantee:
+# these must be domestic whatever the dataset says.
+_KNOWN_INDIAN = frozenset({
+    "BLR", "DEL", "BOM", "HYD", "MAA", "CCU", "AMD", "GOX", "COK", "JAI",
+    "PNQ", "SXR", "IXL", "KUU", "IXZ", "VNS", "LKO", "TRV",
+})
 
 
 def is_indian(code: str | None) -> bool:
-    """Mirrors the extension's own domestic/international split (lib/route.js).
-    Kept small: it only needs the origins this product actually flies from."""
-    return code in {
-        "BLR", "DEL", "BOM", "HYD", "MAA", "CCU", "AMD", "GOX", "COK", "JAI",
-        "PNQ", "SXR", "IXL", "KUU", "IXZ", "VNS", "LKO", "TRV",
-    }
+    """Domestic/international split, mirroring the extension (lib/route.js).
+
+    Now backed by the dataset's country field, so every Indian airport counts —
+    not just the eighteen that were listed by hand. That matters for the default
+    lead time: a domestic route the code thought was international would be
+    searched two weeks out instead of four days.
+    """
+    if not code:
+        return False
+    code = code.upper()
+    if code in _KNOWN_INDIAN:
+        return True
+    from .airports import country_of
+
+    return country_of(code) == "IN"
 
 
 def spoken_name(code: str | None) -> str:
-    """A code back to something worth saying aloud. Falls back to the code, which
-    is ugly but never wrong."""
+    """A code back to something worth saying aloud.
+
+    The curated table is preferred because its names are the ones people use —
+    "Bali", not "Denpasar-Bali Island". Anything outside it comes from the global
+    dataset, so a city resolved from the wider world is still spoken as a city
+    rather than read out as three letters.
+    """
     if not code:
         return ""
     for name, mapped in CITY_TO_IATA.items():
         if mapped == code:
             return name.title()
-    return code
+
+    from .airports import city_name
+
+    return city_name(code) or code
 
 
 def missing_codes() -> list[str]:
