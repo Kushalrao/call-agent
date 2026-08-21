@@ -12,6 +12,24 @@ enum Config {
     /// set on the login screen.
     static let defaultBaseURL = "http://127.0.0.1:8000"
 
+    /// The ElevenLabs agent the app talks to.
+    ///
+    /// Safe to ship because the agent is public (`enable_auth: false`): the phone
+    /// starts a conversation with the agent id alone, no API key involved. That is
+    /// deliberate — routing this through our own server meant the phone had to be
+    /// able to see the Mac, and a laptop that changed Wi-Fi took the whole feature
+    /// down with it.
+    ///
+    /// The tradeoff, stated plainly: anyone holding this id can talk to the agent
+    /// and spend the account's conversation credits. Fine for a dev build with one
+    /// user. Before this ships to strangers, turn on authentication in ElevenLabs
+    /// and go back to server-minted tokens — the endpoint for that already exists
+    /// at POST /v1/agent/session.
+    static let agentID = "agent_2401kyefrv9pehcsef086nb664eg"
+
+    /// Where ElevenLabs mints conversation tokens. Public agents need no key.
+    static let agentTokenURL = "https://api.elevenlabs.io/v1/convai/conversation/token"
+
     static var baseURL: String {
         get { UserDefaults.standard.string(forKey: baseURLKey) ?? defaultBaseURL }
         set { UserDefaults.standard.set(newValue, forKey: baseURLKey) }

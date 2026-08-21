@@ -20,6 +20,7 @@ import SwiftUI
 /// key: a key inside an app bundle is a published key.
 enum AgentSessionError: Error {
     case connectTimedOut
+    case tokenRefused
 }
 
 @MainActor
@@ -57,9 +58,6 @@ final class AgentSession: ObservableObject {
         }
     }
 
-    /// Where the server is, so a failure can say which address it tried.
-    var serverAddress: String { Config.baseURL }
-
     // MARK: - Lifecycle
 
     func start() async {
@@ -80,13 +78,17 @@ final class AgentSession: ObservableObject {
         do {
             let session: AgentSessionInfo
             do {
-                session = try await APIClient.shared.startAgentSession()
+                // Straight to ElevenLabs. This used to go through our own server
+                // so the API key could stay off the device — but the agent is
+                // public, so no key is involved, and routing it through the Mac
+                // meant the phone had to be on the same network as a laptop. When
+                // that laptop changed Wi-Fi the whole feature died, and the error
+                // pointed at the copilot instead of at the address.
+                //
+                // Now the phone needs nothing but internet.
+                session = try await fetchAgentToken()
             } catch {
-                // Name the step. "Couldn't reach the copilot" sent us looking at
-                // ElevenLabs when the phone simply could not see the Mac.
-                fail("Can't reach the hands-free server at \(Config.baseURL). "
-                     + "Check the address in Settings and that both devices are "
-                     + "on the same network.")
+                fail("Couldn't reach ElevenLabs. Check the connection.")
                 return
             }
             phase = .connecting
@@ -163,6 +165,32 @@ final class AgentSession: ObservableObject {
         isMuted.toggle()
         let muted = isMuted
         Task { try? await room?.localParticipant.setMicrophone(enabled: !muted) }
+    }
+
+    /// Mint a conversation token directly. Public agent, so no key.
+    private func fetchAgentToken() async throws -> AgentSessionInfo {
+        var components = URLComponents(string: Config.agentTokenURL)!
+        components.queryItems = [URLQueryItem(name: "agent_id", value: Config.agentID)]
+        var request = URLRequest(url: components.url!)
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw AgentSessionError.tokenRefused
+        }
+        struct Minted: Decodable {
+            let token: String
+            let conversationId: String?
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let minted = try decoder.decode(Minted.self, from: data)
+        return AgentSessionInfo(
+            token: minted.token,
+            // ElevenLabs runs its agent rooms on its own LiveKit deployment.
+            livekitUrl: "wss://livekit.rtc.elevenlabs.io",
+            conversationId: minted.conversationId ?? ""
+        )
     }
 
     // MARK: - Audio
