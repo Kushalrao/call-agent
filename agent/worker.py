@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -40,7 +41,13 @@ from control_plane.logging_setup import Events, log_event
 from .budget import Budget
 from .classifier import Classifier
 from .policy import Phase, Policy, Trigger
-from .search import destination_from, origin_from, run_search, to_sentence
+from .search import (
+    destination_from,
+    origin_from,
+    run_search,
+    to_acknowledgement,
+    to_sentence,
+)
 from .transcript import StreamClock, TranscriptAggregator
 from .vocabulary import KEYTERMS
 from .wake import FastPath
@@ -57,8 +64,23 @@ ENDPOINTING_MS = int(os.environ.get("STT_ENDPOINTING_MS", "300"))
 # 16kHz mono PCM16 is ~480KB — cheap insurance against losing the middle of a
 # sentence when a socket drops.
 RING_BUFFER_SECONDS = 15.0
+# How long a direct answer waits for a gap before speaking anyway.
+FLOOR_WAIT_S = 4.0
+# How long the agent's own words stay eligible for echo rejection. Generous,
+# because STT finalizes well after the audio and the echo arrives later still.
+ECHO_WINDOW_S = 20.0
+# A turn cannot hold the floor forever. A 45s throttled search made the agent
+# refuse five consecutive requests as busy:processing — deaf for the whole time.
+MAX_PROCESSING_S = 15.0
 MAX_RECONNECTS_IN_WINDOW = 3
 RECONNECT_WINDOW_S = 30.0
+
+
+_ECHO_PUNCT = re.compile(r"[^\w\s]+")
+
+
+def _normalize_echo(text: str) -> str:
+    return re.sub(r"\s+", " ", _ECHO_PUNCT.sub(" ", text.lower())).strip()
 
 
 def _peak_amplitude(frame: rtc.AudioFrame) -> int:
@@ -369,6 +391,8 @@ class CallAgent:
         # Speakers whose current segment matched the wake name. The fast path is
         # an independent route to acting, not just to acknowledging.
         self._wake_fired: set[str] = set()
+        # What the agent has said recently, for echo rejection.
+        self._spoken: deque[tuple[float, str]] = deque(maxlen=8)
         # Per-call spend authority. Ceilings are refusals, not warnings.
         self.budget = Budget.from_env(call_id)
         self._tasks: set[asyncio.Task] = set()
@@ -437,6 +461,38 @@ class CallAgent:
                 keywords=list(warmed),
             )
 
+    def remember_spoken(self, text: str) -> None:
+        self._spoken.append((time.monotonic(), _normalize_echo(text)))
+
+    def is_own_echo(self, text: str) -> bool:
+        """True when a transcript is the agent hearing itself.
+
+        The phones use `.defaultToSpeaker` (people are looking at the screen), so
+        the agent's own voice comes out of the speaker and straight back into the
+        mic. On a live call it said "Checking Dubai flights." and five seconds
+        later transcribed "Checking Dubai flights." as Rohan — which is one
+        classifier verdict away from the agent answering itself in a loop.
+
+        Rejected on text rather than by muting STT while speaking, because muting
+        would also throw away genuine barge-in — the thing that lets a human
+        interrupt. Comparing what came back against what we just said costs
+        nothing and only discards the agent's own words.
+        """
+        candidate = _normalize_echo(text)
+        if not candidate:
+            return False
+        now = time.monotonic()
+        for said_at, said in self._spoken:
+            if now - said_at > ECHO_WINDOW_S:
+                continue
+            if candidate in said or said in candidate:
+                return True
+            # Partial echo: STT often returns a fragment of the tail.
+            overlap = len(set(candidate.split()) & set(said.split()))
+            if overlap >= 3 and overlap >= len(candidate.split()) * 0.6:
+                return True
+        return False
+
     def on_speech_start(self, speaker_id: str) -> None:
         self.policy.floor.speech_started(speaker_id)
 
@@ -446,6 +502,12 @@ class CallAgent:
     def on_final(self, utterance: Any) -> None:
         # Closes the speech segment so the next phrase can fire again.
         self.fast_path.on_final(utterance.speaker_id)
+
+        if self.is_own_echo(getattr(utterance, "text", "") or ""):
+            log_event("stt.own_echo_discarded", call_id=self.call_id,
+                      speaker_id=utterance.speaker_id,
+                      text=getattr(utterance, "text", ""))
+            return
 
         # Either path can decide we were addressed, and neither may veto the
         # other. Both failure modes have now been seen on live calls: STT
@@ -499,14 +561,22 @@ class CallAgent:
                 **self.policy.snapshot(),
             )
             if decision.fire:
-                destination = (
-                    destination_from(getattr(utterance, "text", "") or "")
-                    if trigger is Trigger.DIRECT_ADDRESS
-                    else None
-                )
+                # Any fired trigger with a resolvable destination searches —
+                # not just a direct address. A live call transcribed "Hey
+                # copilot, find me flights to Singapore" as "And me flights to
+                # Singapore", which the classifier correctly read as
+                # flight_intent rather than direct address, and the search never
+                # ran. Requiring the wake name to survive transcription puts the
+                # whole feature behind the least reliable word in the sentence.
+                #
+                # This is the ambient behaviour the product is actually for: they
+                # are planning a trip, so look it up, without being asked.
+                destination = destination_from(getattr(utterance, "text", "") or "")
                 if destination is not None:
                     # _searched dedupes if the fast path already started this one.
-                    await self._search_and_speak(destination, utterance)
+                    await self._search_and_speak(
+                        destination, utterance, speak=decision.may_speak
+                    )
                 else:
                     if self.widgets is not None:
                         await self.widgets.status("searching", "Checking flights…")
@@ -519,8 +589,15 @@ class CallAgent:
             log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
                       stage="classify", error=str(exc))
 
-    async def _search_and_speak(self, destination: str, utterance: Any) -> None:
+    async def _search_and_speak(
+        self, destination: str, utterance: Any, *, speak: bool = True
+    ) -> None:
         """Real local search, then speak the cheapest into the call.
+
+        `speak=False` searches and renders but stays silent — the policy's
+        widget/speech asymmetry (spec 5.3 amendment). A card nobody asked for is
+        ignorable; an unprompted remark that turns out to be wrong is not, so the
+        cheap channel tolerates uncertainty and the expensive one does not.
 
         The turn is already claimed by the caller; this releases it.
         """
@@ -541,12 +618,34 @@ class CallAgent:
             try:
                 if self.widgets is not None:
                     await self.widgets.status("searching", "Checking flights…")
-                outcome = await run_search(
+
+                # Start the search FIRST, then talk over it. The search is ~10s
+                # and the acknowledgement ~1.5s, so doing them in sequence spent
+                # eleven seconds in silence after a direct question — which reads
+                # as "it didn't hear me" and gets the question repeated.
+                # Concurrency costs nothing here and removes all the dead air.
+                search = asyncio.create_task(run_search(
                     destination,
                     call_id=self.call_id,
                     origin=origin_from(getattr(utterance, "text", "") or ""),
-                )
+                ))
+
+                # Earcon on this one only: it is what orients attention. A second
+                # tone before the answer would just sound like a notification.
+                if speak:
+                    ack = to_acknowledgement(destination)
+                    self.remember_spoken(ack)
+                    await self.voice.say(ack, earcon=True)
+
+                outcome = await search
                 sentence = to_sentence(outcome)
+                if not speak:
+                    log_event("voice.suppressed", call_id=self.call_id,
+                              destination=destination, reason="widget_only",
+                              detail="searched and rendered, but confidence was "
+                                     "below the speech bar",
+                              text=sentence)
+                    return
 
                 # Someone asked, so this waits for the floor rather than expiring
                 # (spec section 8). The widget already carried the acknowledgement.
@@ -555,11 +654,19 @@ class CallAgent:
                     held_since=held_since, direct=True
                 ).fire:
                     await asyncio.sleep(0.1)
-                    if time.monotonic() - held_since > 15.0:
-                        log_event("voice.dropped", level="warn",
-                                  call_id=self.call_id, reason="floor_never_opened")
-                        return
-                await self.voice.say(sentence)
+                    if time.monotonic() - held_since > FLOOR_WAIT_S:
+                        # Someone asked a question and we have the answer. Waiting
+                        # forever for a polite gap is not politeness, it is
+                        # failure — a live call dropped a completed search this
+                        # way. Speak anyway; barge-in still lets them cut us off.
+                        log_event("voice.floor_wait_expired", level="warn",
+                                  call_id=self.call_id,
+                                  waited_s=round(time.monotonic() - held_since, 1),
+                                  detail="speaking without a gap: the answer was "
+                                         "asked for and is ready")
+                        break
+                self.remember_spoken(sentence)
+                await self.voice.say(sentence, earcon=False)
             finally:
                 self._searching = False
                 self.policy.complete()
@@ -668,6 +775,37 @@ async def entrypoint(ctx: JobContext) -> None:
     ) -> None:
         if track.kind == rtc.TrackKind.KIND_AUDIO:
             agent.attach(track, participant)
+
+    async def _watch_for_silent_participants() -> None:
+        """Flag anyone in the room who never published a microphone.
+
+        A live call had one participant join and never publish a track: the other
+        human heard silence, the agent only ever had one side, and nothing
+        anywhere said so. The call looked completely normal in every log.
+        Whatever else is uncertain, "somebody in this call cannot be heard" should
+        never have to be inferred.
+        """
+        await asyncio.sleep(8.0)
+        while True:
+            for participant in list(ctx.room.remote_participants.values()):
+                ident = str(participant.identity)
+                has_audio = any(
+                    pub.kind == rtc.TrackKind.KIND_AUDIO
+                    for pub in participant.track_publications.values()
+                )
+                if not has_audio and ident not in agent.transcribers:
+                    log_event(
+                        "participant.no_audio_track",
+                        level="error",
+                        call_id=call_id,
+                        speaker_id=ident,
+                        speaker_name=participant.name or ident,
+                        detail="in the room but publishing no microphone — the "
+                               "other person cannot hear them either",
+                    )
+            await asyncio.sleep(20.0)
+
+    agent._spawn(_watch_for_silent_participants())
 
     @ctx.room.on("participant_disconnected")
     def _on_left(participant: rtc.RemoteParticipant) -> None:

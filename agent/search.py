@@ -218,6 +218,22 @@ def pick_cheapest(payload: dict[str, Any]) -> tuple[Cheapest | None, int, int]:
     return best, platforms_seen, total
 
 
+def to_acknowledgement(destination: str) -> str:
+    """What the agent says the instant it is addressed, before it knows anything.
+
+    Exists purely to cover latency. The measured gap between a request and an
+    answer is ~11s of which the search is ~10s, and eleven seconds of silence
+    after someone asks a direct question reads as "it didn't hear me" — people
+    repeat themselves, which then reads as a second request.
+
+    Short on purpose: it is spoken on every request, the free ElevenLabs tier is
+    about 10k characters, and a long preamble delays nothing but still steals the
+    floor from two people mid-conversation.
+    """
+    where = spoken_name(destination) or destination
+    return f"Checking {where} flights."
+
+
 def to_sentence(outcome: SearchOutcome) -> str:
     """One sentence, because that is what a call tolerates.
 

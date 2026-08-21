@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from agent.policy import (
     COOLDOWN_SECONDS,
+    FLOOR_HOLD_S,
+    MAX_PROCESSING_S,
+    SHARED_SILENCE_S,
     PROACTIVE_SPEECH_MIN_CONFIDENCE,
     PROACTIVE_WIDGET_MIN_CONFIDENCE,
     VOICE_EXPIRY_S,
@@ -176,19 +179,52 @@ def test_evaluate_spends_nothing():
 def test_floor_is_busy_while_someone_speaks():
     f = SpeechFloor()
     f.speech_started("u-rohan", now=T)
-    assert f.busy and not f.is_free(now=T + 10)
+    assert not f.is_free(now=T + 0.5)
+    # Continuous talking keeps it held, as long as evidence keeps arriving.
+    for t in (1.0, 2.0, 3.0, 4.0):
+        f.refresh("u-rohan", now=T + t)
+        assert not f.is_free(now=T + t)
 
 
 def test_floor_needs_shared_silence_not_just_one_person_stopping():
     f = SpeechFloor()
     f.speech_started("u-rohan", now=T)
     f.speech_started("u-kushal", now=T)
-    assert f.overlapping
+    assert f.is_overlapping(now=T)
     f.speech_ended("u-rohan", now=T + 1)
-    assert f.busy, "Kushal is still talking"
+    assert f.is_busy(now=T + 1), "Kushal is still talking"
     f.speech_ended("u-kushal", now=T + 2)
     assert not f.is_free(now=T + 2.3), "0.3s is not enough"
     assert f.is_free(now=T + 3.0)
+
+
+def test_a_missing_end_event_cannot_wedge_the_floor():
+    """The bug this cost us: a live call had a finished search in hand and dropped
+    it with `floor_never_opened`, because START_OF_SPEECH arrived without its
+    matching END_OF_SPEECH and the speaker stayed marked as talking forever.
+    Waiting politely for silence that can never come is worse than interrupting."""
+    f = SpeechFloor()
+    f.speech_started("u-rohan", now=T)   # ...and no matching speech_ended, ever
+    assert not f.is_free(now=T + 1.0), "still held while the hold is fresh"
+    assert f.is_free(now=T + FLOOR_HOLD_S + SHARED_SILENCE_S + 0.1), (
+        "a stale hold must lapse on its own"
+    )
+
+
+def test_a_lapsed_hold_does_not_reset_the_silence_timer():
+    """The hold lapses as of when it went stale, not when we noticed — otherwise
+    every check would push the shared-silence window further out."""
+    f = SpeechFloor()
+    f.speech_started("u-rohan", now=T)
+    assert f.silent_for(now=T + FLOOR_HOLD_S + 5.0) >= 5.0
+
+
+def test_refresh_does_not_create_a_hold():
+    """A finalized utterance arrives well after the speech it describes, so
+    treating it as "speaking now" would make the floor busy at the worst moment."""
+    f = SpeechFloor()
+    f.refresh("u-rohan", now=T)
+    assert f.is_free(now=T)
 
 
 def test_floor_is_free_before_anyone_has_spoken():
@@ -202,7 +238,9 @@ def test_unprompted_speech_is_dropped_rather_than_said_late():
     """Answering the question from eight seconds ago is worse than silence; the
     widget already carried the answer."""
     p = Policy()
-    p.floor.speech_started("u-rohan", now=T)
+    # Rohan talks continuously through the whole window.
+    for t in range(0, int(VOICE_EXPIRY_S) + 2):
+        p.floor.speech_started("u-rohan", now=T + t)
     d = p.may_speak_now(held_since=T, direct=False, now=T + VOICE_EXPIRY_S + 0.1)
     assert not d.fire and d.reason == "voice_expired"
 
@@ -210,7 +248,8 @@ def test_unprompted_speech_is_dropped_rather_than_said_late():
 def test_a_direct_answer_keeps_waiting_past_the_expiry():
     """Someone asked; the answer is still wanted."""
     p = Policy()
-    p.floor.speech_started("u-rohan", now=T)
+    for t in range(0, int(VOICE_EXPIRY_S) + 12):
+        p.floor.speech_started("u-rohan", now=T + t)
     d = p.may_speak_now(held_since=T, direct=True, now=T + VOICE_EXPIRY_S + 10)
     assert not d.fire and d.reason == "floor_busy"
 
@@ -225,8 +264,9 @@ def test_speech_goes_as_soon_as_the_floor_opens():
 def test_expiry_is_measured_from_readiness_not_from_the_trigger():
     """A slow model must not eat the social window."""
     p = Policy()
-    p.floor.speech_started("u-rohan", now=T)
     ready_at = T + 30  # synthesis finished late
+    for t in range(0, 40):  # someone is talking throughout
+        p.floor.speech_started("u-rohan", now=T + t)
     assert p.may_speak_now(held_since=ready_at, direct=False,
                            now=ready_at + 1).reason == "floor_busy"
     assert p.may_speak_now(held_since=ready_at, direct=False,
@@ -293,13 +333,28 @@ def test_a_fired_trigger_holds_the_turn():
     assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + 7).fire
 
 
-def test_a_claimed_turn_that_is_never_released_makes_the_agent_deaf():
-    """The mirror of the bug above, and the reason both trigger paths must
-    release. One unmatched begin() and the agent ignores every trigger for the
-    rest of the call — no error, no log, just silence."""
+def test_a_claimed_turn_blocks_briefly_then_gives_the_floor_back():
+    """Both halves of a lesson learned twice.
+
+    An unmatched begin() used to deafen the agent for the rest of the call. Then,
+    with begin/complete correct, a 45s throttled flight search still refused five
+    consecutive requests as busy:processing — the turn was legitimately held, just
+    for far too long. Being asked twice is a much smaller failure than ignoring
+    someone, so an overrunning turn now yields."""
     p = Policy()
     p.begin(Trigger.DIRECT_ADDRESS, now=T)
-    for offset in (10, 60, 600):
-        assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + offset).reason == "busy:processing"
-    p.complete(now=T + 601)
-    assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + 602).fire
+
+    # Briefly busy, which is correct: a follow-up joins the turn underway.
+    assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + 5).reason == "busy:processing"
+
+    # Past the cap it yields, even with no complete() at all.
+    assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + MAX_PROCESSING_S + 1).fire
+
+
+def test_an_overrun_turn_yields_without_needing_complete():
+    """The guarantee that matters: no code path, however broken, can leave the
+    agent permanently unable to hear a direct request."""
+    p = Policy()
+    p.begin(Trigger.DIRECT_ADDRESS, now=T)
+    for offset in (60, 600, 6000):
+        assert p.evaluate(Trigger.DIRECT_ADDRESS, now=T + offset).fire

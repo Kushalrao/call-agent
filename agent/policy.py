@@ -49,6 +49,8 @@ SHARED_SILENCE_S = 0.7
 # Hold-and-expire (spec section 8): an unprompted remark that never found a gap
 # is dropped rather than said late. The widget already carried the answer.
 VOICE_EXPIRY_S = 5.0
+# Longest a single turn may hold the floor before new triggers are allowed again.
+MAX_PROCESSING_S = 15.0
 
 
 class Phase(str, Enum):
@@ -91,48 +93,107 @@ class Decision:
         return Channel.WIDGET in self.channels
 
 
+# A speaker is only credited with holding the floor for this long after the last
+# evidence they were talking. See the note in SpeechFloor.
+FLOOR_HOLD_S = 2.5
+
+
 class SpeechFloor:
     """Who is talking, so the agent can avoid talking over them.
 
-    Driven by VAD / speech-start and speech-end events per track. Only tracks
-    humans; the agent's own speech is handled by barge-in, not by the floor.
+    Driven by per-track speech-start and speech-end events. Only tracks humans;
+    the agent's own speech is handled by barge-in, not by the floor.
+
+    **A held speaker expires.** The floor cannot be allowed to wedge, and it did:
+    on a live call the agent had an answer in hand and dropped it with
+    `floor_never_opened`, because a `START_OF_SPEECH` arrived without its matching
+    `END_OF_SPEECH` and that speaker stayed marked as talking forever. Waiting
+    politely for silence that can never arrive is worse than interrupting.
+
+    So the floor is held by *recent evidence of speech*, not by a latch. A missing
+    end event self-heals after FLOOR_HOLD_S, and every `refresh()` from ongoing
+    speech extends the hold — which means continuous talking still keeps the floor
+    busy, exactly as intended, while a lost event cannot silence the agent for the
+    rest of the call.
     """
 
     def __init__(self) -> None:
-        self._speaking: set[str] = set()
+        # speaker_id -> when we last had evidence they were speaking.
+        self._speaking: dict[str, float] = {}
         self._last_release: float | None = None
 
+    def _now(self, now: float | None) -> float:
+        return now if now is not None else time.monotonic()
+
+    def _prune(self, now: float) -> None:
+        stale = {s: at for s, at in self._speaking.items() if now - at > FLOOR_HOLD_S}
+        for speaker in stale:
+            del self._speaking[speaker]
+        if stale and not self._speaking:
+            # The hold lapsed FLOOR_HOLD_S after the last evidence of speech, not
+            # at the moment we happened to look. Using the check time instead
+            # would push the shared-silence window forward on every poll, so a
+            # stale speaker would keep the floor busy forever — the same wedge
+            # this expiry exists to prevent, one level up.
+            lapsed_at = max(stale.values()) + FLOOR_HOLD_S
+            if self._last_release is None or lapsed_at > self._last_release:
+                self._last_release = lapsed_at
+
     def speech_started(self, speaker_id: str, *, now: float | None = None) -> None:
-        self._speaking.add(speaker_id)
+        self._speaking[speaker_id] = self._now(now)
+
+    def refresh(self, speaker_id: str, *, now: float | None = None) -> None:
+        """More evidence of ongoing speech. Extends the hold if it is still held.
+
+        Deliberately does not *create* a hold: a finalized utterance arrives well
+        after the speech it describes, so treating it as "speaking now" would
+        make the floor busy at exactly the wrong moment.
+        """
+        at = self._now(now)
+        self._prune(at)
+        if speaker_id in self._speaking:
+            self._speaking[speaker_id] = at
 
     def speech_ended(self, speaker_id: str, *, now: float | None = None) -> None:
+        at = self._now(now)
         if speaker_id in self._speaking:
-            self._speaking.discard(speaker_id)
+            del self._speaking[speaker_id]
             if not self._speaking:
-                self._last_release = now if now is not None else time.monotonic()
+                self._last_release = at
 
+    def is_busy(self, *, now: float | None = None) -> bool:
+        self._prune(self._now(now))
+        return bool(self._speaking)
+
+    def is_overlapping(self, *, now: float | None = None) -> bool:
+        """Both humans talking at once — the worst moment to interject."""
+        self._prune(self._now(now))
+        return len(self._speaking) > 1
+
+    # Reading wall time inside these was a real bug: every other method here
+    # takes an injectable `now`, so these two silently disagreed with the rest
+    # under test and would have disagreed with a replay harness too.
     @property
     def busy(self) -> bool:
-        return bool(self._speaking)
+        return self.is_busy()
 
     @property
     def overlapping(self) -> bool:
-        """Both humans talking at once — the worst moment to interject."""
-        return len(self._speaking) > 1
+        return self.is_overlapping()
 
     def silent_for(self, *, now: float | None = None) -> float:
         """Seconds of shared silence. 0.0 while anyone is speaking.
 
         Returns +inf when nobody has spoken yet, so an agent that somehow needs
-        to speak before any human does is not blocked by a floor that was never
-        held.
+        to speak before any human does is not blocked by a floor never held.
         """
+        at = self._now(now)
+        self._prune(at)
         if self._speaking:
             return 0.0
         if self._last_release is None:
             return float("inf")
-        now = now if now is not None else time.monotonic()
-        return now - self._last_release
+        return at - self._last_release
 
     def is_free(self, *, now: float | None = None) -> bool:
         return self.silent_for(now=now) >= SHARED_SILENCE_S
@@ -146,6 +207,7 @@ class Policy:
     floor: SpeechFloor = field(default_factory=SpeechFloor)
 
     _last_action_at: float | None = None
+    _processing_since: float | None = None
     _proactive_widgets: list[float] = field(default_factory=list)
     _proactive_speech: list[float] = field(default_factory=list)
 
@@ -174,8 +236,20 @@ class Policy:
 
         # An agent already working or talking does not start again. Barge-in and
         # completion are what move it out of these phases.
+        #
+        # But a turn that overruns gives the floor back. A 45s flight search once
+        # made the agent refuse five consecutive requests as busy:processing —
+        # deaf for the whole time, with no way for a human to get its attention.
+        # Being asked twice is a far smaller failure than ignoring someone.
         if self.phase in (Phase.PROCESSING, Phase.RESPONDING):
-            return Decision(False, reason=f"busy:{self.phase.value}")
+            overran = (
+                self._processing_since is not None
+                and now - self._processing_since > MAX_PROCESSING_S
+            )
+            if not overran:
+                return Decision(False, reason=f"busy:{self.phase.value}")
+            self.phase = Phase.LISTENING
+            self._processing_since = None
 
         if trigger.is_direct:
             # Someone asked. Bypasses cooldown and every rate limit by design
@@ -265,10 +339,12 @@ class Policy:
         of starting a new one.
         """
         self.phase = Phase.PROCESSING
+        self._processing_since = now if now is not None else time.monotonic()
 
     def complete(self, *, now: float | None = None) -> None:
         """The turn is done — widget rendered, speech finished or dropped."""
         self.phase = Phase.LISTENING
+        self._processing_since = None
 
     def barge_in(self) -> None:
         """A human started talking while the agent was. Spec section 5.2: cancel

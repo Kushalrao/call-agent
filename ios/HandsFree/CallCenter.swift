@@ -367,6 +367,24 @@ final class CallCenter: NSObject, ObservableObject {
             return
         }
 
+        // Microphone permission FIRST, before a Room exists.
+        //
+        // This was originally after connect(), which produced "Couldn't join the
+        // call: Cancelled": when permission is undetermined iOS puts up a system
+        // prompt that suspends the app for as long as the user takes to answer,
+        // and the in-flight WebRTC connect gets cancelled underneath it. Asking
+        // before anything is in flight means there is nothing to cancel.
+        //
+        // Checked rather than assumed, because a denied mic does not throw — the
+        // participant joins, publishes nothing, and the call looks entirely
+        // normal while the other person hears silence. Observed on a live call.
+        guard await requestMicrophonePermission() else {
+            log("microphone permission denied")
+            fail("hands-free needs microphone access. Enable it in Settings > hands-free.")
+            await teardown(reason: "no_mic_permission")
+            return
+        }
+
         let room = Room()
         room.add(delegate: self)
         self.room = room
@@ -388,6 +406,14 @@ final class CallCenter: NSObject, ObservableObject {
             // Publish the mic only after connecting, so a failed connect never
             // leaves a hot mic with nowhere to send audio.
             try await room.localParticipant.setMicrophone(enabled: !isMuted)
+
+            // And verify it actually published. setMicrophone can complete
+            // without producing a track, which is the silent failure above.
+            let published = room.localParticipant.audioTracks.isEmpty == false
+            log("mic published: \(published)")
+            if !published {
+                fail("Couldn't turn on your microphone. The other person won't hear you.")
+            }
             log("room connected, mic published")
 
             if !reportedJoined {
@@ -396,6 +422,12 @@ final class CallCenter: NSObject, ObservableObject {
             }
             phase = .active
             maybeShowSampleWidget()
+        } catch is CancellationError {
+            // The call was torn down while connecting — the other side hung up,
+            // or the user backed out. Not a failure to report, and definitely not
+            // something to retry with a fresh token.
+            log("connect cancelled; call went away while joining")
+            return
         } catch {
             // A 120s join window can lapse if the user sat on the ringing
             // screen. One retry with a fresh token before giving up.
@@ -483,6 +515,35 @@ final class CallCenter: NSObject, ObservableObject {
         debugLines.append("\(stamp)  \(line)")
         if debugLines.count > 60 { debugLines.removeFirst(debugLines.count - 60) }
         print("[call] \(line)")
+    }
+
+    /// Ask for the microphone, and report what the user chose.
+    ///
+    /// Returns immediately when already granted or already denied — only an
+    /// undetermined state prompts. A denied mic is a hard stop rather than a
+    /// warning, because a call where one side cannot be heard is not a degraded
+    /// call, it is a broken one.
+    private func requestMicrophonePermission() async -> Bool {
+        if #available(iOS 17.0, *) {
+            switch AVAudioApplication.shared.recordPermission {
+            case .granted: return true
+            case .denied: return false
+            case .undetermined:
+                return await AVAudioApplication.requestRecordPermission()
+            @unknown default: return false
+            }
+        } else {
+            let session = AVAudioSession.sharedInstance()
+            switch session.recordPermission {
+            case .granted: return true
+            case .denied: return false
+            case .undetermined:
+                return await withCheckedContinuation { continuation in
+                    session.requestRecordPermission { continuation.resume(returning: $0) }
+                }
+            @unknown default: return false
+            }
+        }
     }
 
     /// Configure the category, never activate. CallKit owns activation.

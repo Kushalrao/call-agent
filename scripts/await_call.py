@@ -59,6 +59,10 @@ def diagnose(rows: list[dict]) -> list[str]:
         ("audio frames arrived", had("stt.first_frame"),
          "TRACKS SUBSCRIBED BUT ZERO AUDIO — the mic never reached the agent. "
          "This is an iOS audio-session problem, not an agent problem."),
+        ("every participant published a mic", not had("participant.no_audio_track"),
+         "SOMEONE IN THE CALL PUBLISHED NO MICROPHONE. The other person could not "
+         "hear them either. Usually denied mic permission on that device, or a "
+         "failed audio-session category."),
         ("speech transcribed", had("aggregator.utterance"),
          "audio arrived but Deepgram returned nothing — wrong sample rate, "
          "silence, or a language/model mismatch"),
@@ -123,14 +127,22 @@ def main() -> int:
     levels = [r for r in rows if r.get("event") == "stt.audio_flowing"]
     if levels:
         print("\n--- microphone levels (int16 peak; full scale 32767) ---")
-        for r in levels[:6]:
-            verdict = "SILENT — dead mic" if r.get("silent") else "audio present"
-            print(f"  {str(r.get('speaker_id'))[:8]}  peak={r.get('peak'):>6}  {verdict}")
-        if all(r.get("silent") for r in levels):
+        # Per speaker, the LOUDEST reading — not the first few. Printing the
+        # earliest readings reported "SILENT — dead mic" for a call that
+        # transcribed ten utterances, because the opening seconds were quiet.
+        # A mic is proven alive by its loudest moment, never its quietest.
+        by_speaker: dict[str, list[int]] = {}
+        for r in levels:
+            by_speaker.setdefault(str(r.get("speaker_id"))[:8], []).append(r.get("peak") or 0)
+        for speaker, peaks in sorted(by_speaker.items()):
+            loudest = max(peaks)
+            verdict = "SILENT — dead mic" if loudest < 100 else "audio present"
+            print(f"  {speaker}  loudest={loudest:>6}  (of {len(peaks)} reports)  {verdict}")
+        if all(max(p) < 100 for p in by_speaker.values()):
             print("\n  >> Every frame is silence. The phones publish a track that carries no")
             print("     audio. No speech-to-text vendor can transcribe this — the fault is")
             print("     in the iOS audio session, not in Deepgram.")
-        elif any(not r.get("silent") for r in levels):
+        else:
             print("\n  >> Real audio is arriving. If nothing was transcribed, the fault IS")
             print("     downstream in speech-to-text.")
 

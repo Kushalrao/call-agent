@@ -183,3 +183,33 @@ def test_a_route_to_where_you_already_are_is_refused_not_searched():
     assert outcome.error == "same_city"
     assert outcome.elapsed_s == 0.0, "refused before any browser work"
     assert "already in" in to_sentence(outcome)
+
+
+# --- latency masking -------------------------------------------------------
+
+
+def test_acknowledgement_names_the_destination():
+    """Spoken within ~1s of being addressed, to cover the ~10s search. Silence
+    after a direct question reads as "it didn't hear me", and people repeat
+    themselves — which then reads as a second request."""
+    from agent.search import to_acknowledgement
+
+    assert "Singapore" in to_acknowledgement("SIN")
+    assert "Dubai" in to_acknowledgement("DXB")
+
+
+def test_the_two_utterances_stay_within_the_free_tier_budget():
+    """Free ElevenLabs is ~10k characters. Two remarks per request means the
+    preamble is charged on every single one, so it has to stay short."""
+    from agent.search import Cheapest, SearchOutcome, to_acknowledgement, to_sentence
+
+    outcome = SearchOutcome("BLR", "SIN", "2026-08-31",
+                            Cheapest("Cleartrip", "Air India", "AI2", 19532, 1))
+    per_request = len(to_acknowledgement("SIN")) + len(to_sentence(outcome))
+    assert per_request < 140, "two utterances per request must stay compact"
+    assert 10_000 // per_request >= 70, "free tier should cover ~100 requests"
+
+
+def test_an_unknown_code_still_produces_a_sayable_acknowledgement():
+    from agent.search import to_acknowledgement
+    assert to_acknowledgement("ZZZ").strip() != ""
