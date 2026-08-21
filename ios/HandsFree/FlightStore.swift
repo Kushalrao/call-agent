@@ -16,6 +16,17 @@ struct Flight: Decodable, Identifiable, Equatable {
     /// eight and wrapped onto a second line.
     let departsClock: String?
     let arrivesClock: String?
+    /// Two-letter IATA airline code. Nil when we could not determine it, which
+    /// the row renders as initials rather than as some other airline's logo.
+    let airlineCode: String?
+
+    /// Where the carrier's logo lives. Nil when the airline is unknown — a logo
+    /// is an assertion about who operates the flight, and the wrong one beside a
+    /// real fare is a claim the user has no way to check.
+    var logoURL: URL? {
+        guard let code = airlineCode, code.count >= 2 else { return nil }
+        return URL(string: "https://pics.avs.io/120/120/\(code.uppercased()).png")
+    }
 
     /// Stable across a filter change so rows animate rather than jump.
     var id: String { "\(carrier)-\(priceInr)-\(departs ?? "")-\(platform)" }
@@ -107,12 +118,21 @@ final class FlightStore: ObservableObject {
 
     private var poller: Task<Void, Never>?
     private var lastSearchedAt: Double = 0
+    /// When this session started. Results older than it belong to a previous
+    /// conversation and must not appear.
+    private var sessionStartedAt: Double = 0
 
     var visible: [Flight] { filter.apply(to: all) }
     var hasResults: Bool { !all.isEmpty }
 
     func start() {
         guard poller == nil else { return }
+        // Anything the tool is still holding from a previous conversation is not
+        // this conversation's. Without this the card opened already full of the
+        // last session's flights, before the caller had asked for anything —
+        // results should appear because a search happened, not because the
+        // server still remembers one.
+        sessionStartedAt = Date().timeIntervalSince1970
         poller = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.refresh()
@@ -129,6 +149,7 @@ final class FlightStore: ObservableObject {
         destination = ""
         filter = .none
         lastSearchedAt = 0
+        sessionStartedAt = 0
     }
 
     func refresh() async {
@@ -146,6 +167,10 @@ final class FlightStore: ObservableObject {
             // Only react to a genuinely newer search. Re-assigning identical rows
             // every two seconds would restart the row animations forever.
             guard latest.searchedAt > lastSearchedAt else { return }
+            // And newer than this session. A small grace window, because the
+            // search that triggers the first render can land a moment before the
+            // store is asked to start.
+            guard latest.searchedAt > sessionStartedAt - 5 else { return }
             lastSearchedAt = latest.searchedAt
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                 all = latest.options

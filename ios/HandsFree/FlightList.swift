@@ -7,12 +7,11 @@ import SwiftUI
 ///
 /// Two asset departures, both declared rather than hidden:
 ///
-/// - **The airline logo is content, not a design asset.** The design shows
-///   Lufthansa and Emirates marks standing in for whoever actually flies the
-///   route; we have no logo for Akasa or SriLankan, and shipping a wrong airline's
-///   mark next to a real fare is worse than shipping none. The geometry is
-///   preserved exactly (36.95pt square, 3.79pt radius) and filled with the
-///   carrier's initials.
+/// - **The airline logo is content, not a design asset.** The design's Lufthansa
+///   and Emirates marks stand in for whoever actually flies the route, so real
+///   logos are loaded from a CDN keyed by airline IATA code. The designed geometry
+///   is preserved exactly (36.95pt square, 3.79pt radius), and an airline we
+///   cannot identify falls back to initials rather than to another airline's mark.
 /// - **The arrow between the times is drawn, not exported.** It is a geometric
 ///   connector — a line with a dot — rather than an icon with a glyph, and its
 ///   designed box (54 × 17.06) is reproduced exactly. An exported SVG would need
@@ -59,7 +58,7 @@ struct ResultRow: View {
         ZStack(alignment: .topLeading) {
             Color.clear.frame(width: Row.width, height: Row.height)
 
-            AirlineMark(carrier: flight.carrier)
+            AirlineMark(carrier: flight.carrier, logo: flight.logoURL)
                 .offset(x: Row.logoX, y: Row.logoY)
 
             ZStack(alignment: .topLeading) {
@@ -116,31 +115,63 @@ private struct Connector: View {
     }
 }
 
-/// Stands in for the airline logo. See the note at the top of this file: a wrong
-/// airline's mark next to a real fare is worse than no mark.
+/// The carrier's logo, with initials while it loads or when the airline is
+/// unknown.
+///
+/// The design ships Lufthansa and Emirates marks as placeholders. Real logos come
+/// from a logo CDN keyed by airline IATA code, which is why the code is derived
+/// server-side (agent/airlines.py) rather than guessed from a display name here.
+///
+/// Initials are the fallback rather than a generic plane, because they are
+/// obviously a placeholder — whereas some other airline's mark beside a real fare
+/// is a claim the user cannot check.
 private struct AirlineMark: View {
     let carrier: String
+    let logo: URL?
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: Row.logoRadius, style: .continuous)
-                .fill(Color(red: 236 / 255, green: 236 / 255, blue: 228 / 255))
-            Text(initials)
+                .fill(Color.white)
+
+            if let logo {
+                AsyncImage(url: logo) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(2)
+                    default:
+                        initials
+                    }
+                }
+            } else {
+                initials
+            }
+        }
+        .frame(width: Row.logoSize, height: Row.logoSize)
+        .clipShape(RoundedRectangle(cornerRadius: Row.logoRadius, style: .continuous))
+        .accessibilityLabel(carrier)
+    }
+
+    private var initials: some View {
+        ZStack {
+            Color(red: 236 / 255, green: 236 / 255, blue: 228 / 255)
+            Text(monogram)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.black.opacity(0.55))
         }
-        .frame(width: Row.logoSize, height: Row.logoSize)
     }
 
-    private var initials: String {
+    private var monogram: String {
         // First carrier only: a codeshare comes through as "Air India, Thai".
         let primary = carrier.split(separator: ",").first.map(String.init) ?? carrier
         let words = primary.split(separator: " ").prefix(2)
         if words.count >= 2 {
             return words.compactMap(\.first).map(String.init).joined().uppercased()
         }
-        // A single-word carrier: first two letters, not one. "IndiGo" was showing
-        // as "I".
+        // A single-word carrier: first two letters, not one. "IndiGo" showed as "I".
         let single = words.first.map(String.init) ?? primary
         return String(single.prefix(2)).uppercased()
     }

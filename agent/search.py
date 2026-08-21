@@ -148,6 +148,9 @@ class Cheapest:
     # 24-hour, for the card. The screen and the voice want different formats.
     depart_clock: str | None = None
     arrive_clock: str | None = None
+    # Two-letter IATA airline code, for the logo. None when unknown, which the
+    # card renders as initials rather than as a wrong airline's mark.
+    airline_code: str | None = None
 
 
 @dataclass(frozen=True)
@@ -324,6 +327,7 @@ def collect_options(payload: dict[str, Any]) -> tuple[list[Cheapest], int, int]:
                 arrive_spoken=option.get("arrive_spoken"),
                 depart_clock=option.get("depart_clock"),
                 arrive_clock=option.get("arrive_clock"),
+                airline_code=option.get("airline_code"),
             ))
 
     collected.sort(key=lambda o: o.price)

@@ -16,6 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from agent.airlines import code_for as airline_code
+
 from .localtime import clock_time, spoken_time, to_local
 
 # The extension knows about IndiGo, but we deliberately ignore it: dropped from
@@ -102,6 +104,12 @@ def _option(f: dict[str, Any], origin: str = "", destination: str = "") -> dict[
         "depart_spoken": spoken_time(str(depart), origin),
         "arrive_spoken": spoken_time(arrive_raw, destination) if arrive_raw else None,
         # 24-hour for the screen; see clock_time for why the two differ.
+        # For the logo. Derived here so the code and the carrier name always come
+        # from the same row.
+        "airline_code": airline_code(
+            ", ".join(str(c) for c in carriers) if carriers else None,
+            " / ".join(str(n) for n in numbers) if numbers else None,
+        ),
         "depart_clock": clock_time(str(depart), origin),
         "arrive_clock": clock_time(arrive_raw, destination) if arrive_raw else None,
         "stops": _as_int(_first(f, "stops")) or 0,

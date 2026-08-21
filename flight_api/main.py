@@ -97,6 +97,7 @@ class Option(BaseModel):
     # 24-hour, for the card. "18:00" fits the designed time group; "6:00 pm" wraps.
     departs_clock: str | None = None
     arrives_clock: str | None = None
+    airline_code: str | None = None
 
 
 class Advice(BaseModel):
@@ -433,4 +434,5 @@ def _row(option: Any) -> Option:
         arrives=option.arrive_spoken,
         departs_clock=option.depart_clock,
         arrives_clock=option.arrive_clock,
+        airline_code=option.airline_code,
     )
