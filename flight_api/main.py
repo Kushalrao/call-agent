@@ -63,10 +63,12 @@ class Option(BaseModel):
     price_inr: int
     stops: int
     platform: str
-    # Minutes. Deliberately no departure time: Ixigo publishes times in UTC while
-    # Cleartrip publishes local time with an offset, so any absolute time here
-    # would be wrong by hours for one of them. Duration is directly comparable.
     duration_min: int | None = None
+    # Local time at the airport, already worded for speech. Ixigo's UTC is
+    # converted against the airport's own timezone in flight_bridge/localtime, so
+    # these are the times a person standing there would read.
+    departs: str | None = None
+    arrives: str | None = None
 
 
 class Summary(BaseModel):
@@ -242,4 +244,6 @@ def _row(option: Any) -> Option:
         stops=option.stops,
         platform=option.platform,
         duration_min=option.duration_min,
+        departs=option.depart_spoken,
+        arrives=option.arrive_spoken,
     )

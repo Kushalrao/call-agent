@@ -138,12 +138,13 @@ class Cheapest:
     price: int
     stops: int
     currency: str = "INR"
-    # Minutes. Safe to expose and compare: every platform reports a duration in
-    # the same units. Absolute departure times deliberately are not carried here
-    # — Ixigo publishes them in UTC while Cleartrip publishes local time with an
-    # offset, so comparing or speaking them would be wrong by hours until that is
-    # normalised.
     duration_min: int | None = None
+    # Local time at the airport, pre-formatted for speech ("8:10 am"). Safe now
+    # that flight_bridge/localtime normalises Ixigo's UTC against the airport's
+    # own timezone — before that, speaking a time meant being hours wrong for one
+    # platform, which is not something a listener can catch.
+    depart_spoken: str | None = None
+    arrive_spoken: str | None = None
 
 
 @dataclass(frozen=True)
@@ -316,6 +317,8 @@ def collect_options(payload: dict[str, Any]) -> tuple[list[Cheapest], int, int]:
                 stops=int(option.get("stops") or 0),
                 currency=(option.get("price") or {}).get("currency") or "INR",
                 duration_min=option.get("duration_min"),
+                depart_spoken=option.get("depart_spoken"),
+                arrive_spoken=option.get("arrive_spoken"),
             ))
 
     collected.sort(key=lambda o: o.price)

@@ -68,13 +68,17 @@ again for the same route just because they asked something else about it.
   roughly" and "what is the most expensive".
 - `summary.fastest` — quickest by duration, which is often not the cheapest.
 - `options` — every flight found, cheapest first, with carrier, price, stops,
-  duration and which site it came from.
+  duration, and the departure and arrival times.
+- `options[].departs` and `arrives` — already local time at that airport and
+  already worded for speech ("8:10 am"). Read them as they are; do not convert
+  anything or add a timezone.
+- `options[].duration_min` — total journey in minutes. Say it in hours and
+  minutes, not "two hundred and ninety minutes".
 
 Rules for these answers:
 - Only what is in the data. If they ask something it does not cover — the
-  stopover city, the departure time, baggage, seats — say you do not have it and
-  offer what you do.
-- There are no departure times in the data on purpose, so never state one.
+  stopover city, baggage, seats, meals — say you do not have it and offer what
+  you do.
 - The same flight can appear twice at different prices. That is two real offers
   on two sites, not a mistake.
 - Search again only if the route, date or origin changes.

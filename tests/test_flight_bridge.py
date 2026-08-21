@@ -370,3 +370,51 @@ async def test_healthz_reports_browser_presence(client: httpx.AsyncClient):
     assert after["browser_connected"] is True
 
     poll.cancel()
+
+
+# --- local times ------------------------------------------------------------
+
+
+def test_ixigo_utc_becomes_local_at_the_airport():
+    """The bug this fixes: Cleartrip publishes local time with an offset, Ixigo
+    publishes UTC. Reading the wall clock out of the string — which the iOS card
+    does — showed an 08:10 Bangalore departure as 02:40. Tolerable on a card
+    someone can sanity-check; not tolerable spoken, because a misheard time
+    cannot be re-read."""
+    from flight_bridge.localtime import spoken_time, to_local
+
+    assert spoken_time("2026-12-07T02:40:00Z", "BLR") == "8:10 am"
+    assert spoken_time("2026-12-07T08:10+05:30", "BLR") == "8:10 am"
+    assert to_local("2026-12-07T02:40:00Z", "BLR").startswith("2026-12-07T08:10")
+
+
+def test_a_value_that_already_carries_an_offset_is_left_alone():
+    """The platform that wrote it meant the airport's local time. Re-deriving it
+    from a timezone database only adds a way to be wrong."""
+    from flight_bridge.localtime import to_local
+
+    original = "2026-12-07T08:10+05:30"
+    assert to_local(original, "BLR") == original
+
+
+def test_unparseable_times_pass_through_untouched():
+    """A wrong-looking string is easier to diagnose than an invented one."""
+    from flight_bridge.localtime import spoken_time, to_local
+
+    assert to_local("garbage", "BLR") == "garbage"
+    assert spoken_time("", "BLR") is None
+    assert spoken_time("garbage", "BLR") is None
+
+
+def test_conversion_uses_the_destination_zone_for_arrival():
+    from flight_bridge.localtime import spoken_time
+
+    # 16:30 UTC is half past midnight the next day in Bali (UTC+8).
+    assert spoken_time("2026-09-04T16:30:00Z", "DPS") == "12:30 am"
+
+
+def test_an_unknown_airport_does_not_invent_a_time():
+    from flight_bridge.localtime import to_local
+
+    value = "2026-12-07T02:40:00Z"
+    assert to_local(value, "QQQ") == value

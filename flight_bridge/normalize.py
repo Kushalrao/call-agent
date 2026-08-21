@@ -16,6 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .localtime import spoken_time, to_local
+
 # The extension knows about IndiGo, but we deliberately ignore it: dropped from
 # scope on 2026-08-21.
 PLATFORMS = ("cleartrip", "mmt", "ixigo", "skyscanner")
@@ -52,7 +54,7 @@ def _as_int(v: Any) -> int | None:
         return None
 
 
-def _option(f: dict[str, Any]) -> dict[str, Any] | None:
+def _option(f: dict[str, Any], origin: str = "", destination: str = "") -> dict[str, Any] | None:
     """One flight -> one spec section 7 option. Reads both field spellings the
     extension's parsers use (MMT emits departIso/durationMin; others go through
     segments/departTime)."""
@@ -82,11 +84,23 @@ def _option(f: dict[str, Any]) -> dict[str, Any] | None:
                 if name and name not in carriers:
                     carriers.append(str(name))
 
+    # Times are normalised to local-at-the-airport here, once, rather than in
+    # each consumer. Cleartrip publishes local+offset and Ixigo publishes UTC, so
+    # reading the wall clock straight out of the string — which is what the iOS
+    # card does — showed Ixigo departures hours early. See flight_bridge/localtime.
+    arrive_raw = str(_first(f, "arriveIso", "arriveTime") or "")
+    depart_local = to_local(str(depart), origin)
+    arrive_local = to_local(arrive_raw, destination) if arrive_raw else ""
+
     return {
         "carrier": ", ".join(str(c) for c in carriers) if carriers else "\u2014",
         "flight": " / ".join(str(n).replace(" ", "").upper() for n in numbers),
-        "depart": str(depart),
-        "arrive": str(_first(f, "arriveIso", "arriveTime") or ""),
+        "depart": depart_local,
+        "arrive": arrive_local,
+        # Pre-formatted for speech, so a voice consumer never has to parse or
+        # guess a timezone: "8:10 am".
+        "depart_spoken": spoken_time(str(depart), origin),
+        "arrive_spoken": spoken_time(arrive_raw, destination) if arrive_raw else None,
         "stops": _as_int(_first(f, "stops")) or 0,
         "duration_min": _as_int(_first(f, "durationMin", "durationTotalMinutes")),
         "price": {"amount": price, "currency": "INR"},
@@ -107,7 +121,12 @@ def to_widget_payload(record: dict[str, Any], *, limit: int = 3) -> dict[str, An
     for key in PLATFORMS:
         site = sites.get(key) or {}
         raw = site.get("flights") or []
-        options = [o for o in (_option(f) for f in raw if isinstance(f, dict)) if o]
+        options = [
+            o for o in (
+                _option(f, route.get("from") or "", route.get("to") or "")
+                for f in raw if isinstance(f, dict)
+            ) if o
+        ]
         options.sort(key=lambda o: o["price"]["amount"])
         platforms[PLATFORM_LABELS[key]] = {
             "status": site.get("status"),
