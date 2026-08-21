@@ -46,6 +46,11 @@ SCENARIOS = {
     "flights": [
         {"identity": "u-rohan", "name": "Rohan", "wav": "rohan_flights.wav", "delay": 0.0},
     ],
+    # The ambient path: nobody says the agent's name at any point.
+    "ambient": [
+        {"identity": "u-rohan", "name": "Rohan", "wav": "ambient_rohan.wav", "delay": 0.0},
+        {"identity": "u-kushal", "name": "Kushal", "wav": "ambient_kushal.wav", "delay": 9.0},
+    ],
     "direct": [
         {"identity": "u-rohan", "name": "Rohan", "wav": "rohan_direct.wav", "delay": 0.0},
         {"identity": "u-kushal", "name": "Kushal", "wav": "kushal_reply.wav", "delay": 7.0},

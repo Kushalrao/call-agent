@@ -44,6 +44,18 @@ SCRIPTS = {
         "Daniel",
         "Hey copilot, find me flights to Singapore.",
     ),
+    # No wake word anywhere: this is the ambient path. Two people planning a
+    # trip, with the destination corroborated across utterances.
+    "ambient_rohan": (
+        "Daniel",
+        "December is packed at work. Singapore sounds good to me though. "
+        "Yeah let's do Singapore, second week of December.",
+    ),
+    "ambient_kushal": (
+        "Alex",
+        "What about the second week instead. Direct flights only please, "
+        "under thirty thousand each.",
+    ),
     "kushal_reply": (
         "Alex",
         "Yeah, direct ones only if you can.",

@@ -41,7 +41,10 @@ from control_plane.logging_setup import Events, log_event
 from .budget import Budget
 from .classifier import Classifier
 from .policy import Phase, Policy, Trigger
+from .extractor import TripExtractor, worth_extracting
 from .search import (
+    DEFAULT_ORIGIN,
+    SearchCache,
     destination_from,
     origin_from,
     run_search,
@@ -49,6 +52,7 @@ from .search import (
     to_sentence,
 )
 from .transcript import StreamClock, TranscriptAggregator
+from .trip import TripTracker
 from .vocabulary import KEYTERMS
 from .wake import FastPath
 from .voice import Voice
@@ -379,7 +383,13 @@ class TrackTranscriber:
 class CallAgent:
     """Per-call state. One of these per room."""
 
-    def __init__(self, call_id: str, *, classifier: Classifier | None = None) -> None:
+    def __init__(
+        self,
+        call_id: str,
+        *,
+        classifier: Classifier | None = None,
+        extractor: TripExtractor | None = None,
+    ) -> None:
         self.call_id = call_id
         self.aggregator = TranscriptAggregator()
         self.transcribers: dict[str, TrackTranscriber] = {}
@@ -402,6 +412,10 @@ class CallAgent:
         self._acknowledged: set[str] = set()
         # Addressed us, still talking. Acknowledged the moment they stop.
         self._ack_pending: set[str] = set()
+        # The ambient path: accumulated plan, extraction, and warmed results.
+        self.trip = TripTracker(default_origin=DEFAULT_ORIGIN)
+        self.extractor = extractor or TripExtractor()
+        self.cache = SearchCache()
         # Per-call spend authority. Ceilings are refusals, not warnings.
         self.budget = Budget.from_env(call_id)
         self._tasks: set[asyncio.Task] = set()
@@ -552,6 +566,13 @@ class CallAgent:
         # backs up the STT event loop and delays the next utterance.
         self._spawn(self._classify(utterance))
 
+        # The ambient path (spec 4.3). Gated twice before any model call: the
+        # utterance has to plausibly contain trip detail, and enough time has to
+        # have passed. Most utterances in a call satisfy neither.
+        text = getattr(utterance, "text", "") or ""
+        if worth_extracting(text) and self.extractor.due():
+            self._spawn(self._extract_and_maybe_act())
+
     async def _classify(self, utterance: Any) -> None:
         """Classify, then let the policy decide. Never raises."""
         try:
@@ -615,6 +636,130 @@ class CallAgent:
             log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
                       stage="classify", error=str(exc))
 
+    async def _extract_and_maybe_act(self) -> None:
+        """Update the plan, warm the route, and answer once it settles.
+
+        The whole point of the ambient path: nobody has to say the agent's name.
+        Two separate decisions, deliberately:
+
+        **Prefetch on weak evidence.** A destination being mentioned is enough to
+        start a search, because a discarded result costs nothing and having it
+        warm turns a 10s wait into an instant answer.
+
+        **Answer only when the route settles and the intent is real.** "Maybe
+        Bali... actually Thailand" must not produce two spoken answers, and a
+        story about last year's holiday must not produce one at all.
+        """
+        try:
+            fields, confidence = await self.extractor.extract(
+                self.aggregator.render_window(), call_id=self.call_id,
+                budget=self.budget,
+            )
+            if not fields:
+                return
+
+            before = self.trip.context.route
+            context = self.trip.merge(fields, confidence=confidence)
+            if context.route != before:
+                log_event("trip.context_changed", call_id=self.call_id,
+                          route=context.render(), **context.summary())
+
+            # Warm it, silently.
+            warm = self.trip.route_to_prefetch()
+            if warm and self.cache.claim(warm):
+                self._spawn(self._prefetch(warm))
+
+            # Answer, only if it has earned it.
+            answer = self.trip.route_to_answer()
+            if answer is None:
+                return
+
+            # Scored from the accumulated plan, not from one utterance. See
+            # TripTracker.evidence — gating this path on the classifier's
+            # per-utterance confidence meant it could search but never speak.
+            evidence = self.trip.evidence()
+            decision = self.policy.evaluate(
+                Trigger.FLIGHT_INTENT, confidence=evidence
+            )
+            log_event(
+                Events.TRIGGER_FIRED if decision.fire else Events.TRIGGER_SUPPRESSED,
+                call_id=self.call_id, trigger=Trigger.FLIGHT_INTENT.value,
+                path="ambient", route=answer, reason=decision.reason,
+                intent_strength=round(context.intent_strength, 2),
+                evidence=round(evidence, 2),
+                destination_mentions=context.destination.mentions,
+                settled=context.is_settled(),
+                channels=sorted(c.value for c in decision.channels) or None,
+                **self.policy.snapshot(),
+            )
+            if not decision.fire:
+                return
+
+            origin, destination = self.trip.parts()
+            if destination is None:
+                return
+            self.policy.begin(Trigger.FLIGHT_INTENT)
+            self.policy.record_action(
+                trigger=Trigger.FLIGHT_INTENT, channels=decision.channels
+            )
+            await self._answer_route(
+                origin or DEFAULT_ORIGIN, destination, answer,
+                speak=decision.may_speak,
+            )
+        except Exception as exc:  # noqa: BLE001
+            log_event(Events.ERROR_INTERNAL, level="error", call_id=self.call_id,
+                      stage="extract_and_act", error=str(exc))
+
+    async def _prefetch(self, route_key: str) -> None:
+        """Warm a route without saying anything. Never raises."""
+        origin, destination = self.trip.parts()
+        if destination is None:
+            self.cache.release(route_key)
+            return
+        log_event("prefetch.started", call_id=self.call_id, route=route_key)
+        try:
+            outcome = await run_search(
+                destination, call_id=self.call_id, origin=origin or DEFAULT_ORIGIN
+            )
+            self.cache.put(route_key, outcome)
+            log_event("prefetch.finished", call_id=self.call_id, route=route_key,
+                      ok=outcome.ok, elapsed_s=round(outcome.elapsed_s, 1),
+                      cheapest=outcome.cheapest.price if outcome.cheapest else None)
+        except Exception as exc:  # noqa: BLE001
+            self.cache.release(route_key)
+            log_event("prefetch.failed", level="warn", call_id=self.call_id,
+                      route=route_key, error=str(exc))
+
+    async def _answer_route(
+        self, origin: str, destination: str, route_key: str, *, speak: bool
+    ) -> None:
+        """Speak a route's cheapest fare, from cache when it is already warm."""
+        try:
+            cached = self.cache.get(route_key)
+            if cached is not None:
+                log_event("search.cache_hit", call_id=self.call_id, route=route_key)
+                outcome = cached
+            else:
+                if speak:
+                    self.remember_spoken(INSTANT_ACK)
+                    self._spawn(self.voice.say_cached(INSTANT_ACK))
+                outcome = await run_search(
+                    destination, call_id=self.call_id, origin=origin
+                )
+                self.cache.put(route_key, outcome)
+
+            sentence = to_sentence(outcome)
+            if not speak:
+                log_event("voice.suppressed", call_id=self.call_id, route=route_key,
+                          reason="widget_only", text=sentence)
+                return
+            if self.widgets is not None:
+                await self.widgets.status("searching", "Found flights")
+            self.remember_spoken(sentence)
+            await self.voice.say(sentence, earcon=cached is not None)
+        finally:
+            self.policy.complete()
+
     async def _search_and_speak(
         self, destination: str, utterance: Any, *, speak: bool = True
     ) -> None:
@@ -650,11 +795,22 @@ class CallAgent:
                 # eleven seconds in silence after a direct question — which reads
                 # as "it didn't hear me" and gets the question repeated.
                 # Concurrency costs nothing here and removes all the dead air.
-                search = asyncio.create_task(run_search(
-                    destination,
-                    call_id=self.call_id,
-                    origin=origin_from(getattr(utterance, "text", "") or ""),
-                ))
+                origin = origin_from(getattr(utterance, "text", "") or "")
+                # Share the ambient path's cache. Without this the same route is
+                # fetched twice when both paths fire on one conversation — and the
+                # aggregators throttle repeats, which is how a route got blocked
+                # during testing.
+                key = f"{origin}-{destination}-default"
+                warm = self.cache.get(key)
+                search = (
+                    asyncio.create_task(_already(warm))
+                    if warm is not None
+                    else asyncio.create_task(run_search(
+                        destination, call_id=self.call_id, origin=origin,
+                    ))
+                )
+                if warm is not None:
+                    log_event("search.cache_hit", call_id=self.call_id, route=key)
 
                 # Earcon on this one only: it is what orients attention. A second
                 # tone before the answer would just sound like a notification.
@@ -669,6 +825,7 @@ class CallAgent:
                     await self.voice.say(ack, earcon=True)
 
                 outcome = await search
+                self.cache.put(key, outcome)
                 sentence = to_sentence(outcome)
                 if not speak:
                     log_event("voice.suppressed", call_id=self.call_id,
@@ -746,6 +903,11 @@ class CallAgent:
         }
 
 
+async def _already(outcome: Any) -> Any:
+    """Wrap a cached result so both branches are awaitable the same way."""
+    return outcome
+
+
 def extract_call_id(room_metadata: str | None, job_metadata: str | None) -> str:
     """Pull call_id out of whichever metadata channel carried it.
 
@@ -795,7 +957,11 @@ async def entrypoint(ctx: JobContext) -> None:
     )
 
     # Reuse the prewarmed classifier and its warm connection pool.
-    agent = CallAgent(call_id, classifier=ctx.proc.userdata.get("classifier"))
+    agent = CallAgent(
+        call_id,
+        classifier=ctx.proc.userdata.get("classifier"),
+        extractor=ctx.proc.userdata.get("extractor"),
+    )
     log_event(Events.AGENT_JOINED, call_id=call_id, room=ctx.room.name)
 
     @ctx.room.on("track_subscribed")
@@ -926,6 +1092,7 @@ def prewarm(proc: Any) -> None:
     """
     classifier = Classifier()
     proc.userdata["classifier"] = classifier
+    proc.userdata["extractor"] = TripExtractor()
     if classifier.available:
         asyncio.get_event_loop().run_until_complete(classifier.prewarm())
 

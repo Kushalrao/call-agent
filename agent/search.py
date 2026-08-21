@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -88,6 +88,41 @@ def _warm_browser() -> None:
         # Warming is best-effort. If it fails the search will report its own
         # timeout, which is now distinguishable from "no flights found".
         pass
+
+
+@dataclass
+class SearchCache:
+    """Results keyed by route, so an answer can be instant.
+
+    This is what makes the ambient path feel immediate rather than slow. A search
+    takes 7-12s; if it only starts when someone asks, they wait. Warming it when
+    a destination is first *mentioned* means the answer is usually already sitting
+    here by the time it is wanted.
+
+    Bounded, because a search is not free in the way a cache normally implies: the
+    flight aggregators throttle repeated queries, and one route was blocked during
+    testing by re-running it. Each route is fetched once per call.
+    """
+
+    entries: dict[str, "SearchOutcome"] = field(default_factory=dict)
+    in_flight: set[str] = field(default_factory=set)
+
+    def get(self, key: str) -> "SearchOutcome | None":
+        return self.entries.get(key)
+
+    def put(self, key: str, outcome: "SearchOutcome") -> None:
+        self.entries[key] = outcome
+        self.in_flight.discard(key)
+
+    def claim(self, key: str) -> bool:
+        """Reserve a route for fetching. False if cached or already running."""
+        if key in self.entries or key in self.in_flight:
+            return False
+        self.in_flight.add(key)
+        return True
+
+    def release(self, key: str) -> None:
+        self.in_flight.discard(key)
 
 
 @dataclass(frozen=True)
